@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { copyToClipboard } from "@/lib/clipboard";
+import { MunicipalitySelect } from "./municipality-select";
 
 type CreateUserModalProps = {
   isOpen: boolean;
@@ -79,6 +80,13 @@ export function CreateUserModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMessage("");
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setErrorMessage("Por favor ingresa un correo electrónico válido (ejemplo: usuario@municipio.gob.mx o usuario@correo.com).");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -317,21 +325,11 @@ export function CreateUserModal({
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">
-                    Institución o Municipio
-                  </label>
-                  <div className="relative">
-                    <Building className="absolute left-3.5 top-3 h-4 w-4 text-text-muted" />
-                    <input
-                      type="text"
-                      placeholder="Ej. H. Ayuntamiento de Teziutlán"
-                      value={formData.institution}
-                      onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-                      className="w-full rounded-xl border border-border bg-background pl-10 pr-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none"
-                    />
-                  </div>
-                </div>
+                <MunicipalitySelect
+                  label="Municipio o Institución"
+                  value={formData.institution}
+                  onChange={(val) => setFormData({ ...formData, institution: val })}
+                />
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-1.5">

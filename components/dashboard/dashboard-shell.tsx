@@ -15,6 +15,7 @@ type DashboardShellProps = {
 
     homePath?: string;
     profilePath?: string;
+    helpPath?: string;
 
     user: {
         name: string;
@@ -34,6 +35,7 @@ export function DashboardShell({
     navigation,
     homePath,
     profilePath,
+    helpPath,
     user,
     organization,
 }: DashboardShellProps) {
@@ -94,6 +96,7 @@ export function DashboardShell({
                 <DashboardSidebar
                     navigation={navigation}
                     organization={organization}
+                    helpPath={helpPath}
                 />
             </aside>
 
@@ -125,6 +128,7 @@ export function DashboardShell({
                 <DashboardSidebar
                     navigation={navigation}
                     organization={organization}
+                    helpPath={helpPath}
                     mobile
                     onClose={() =>
                         setSidebarOpen(false)

@@ -7,8 +7,6 @@ import {
     Menu,
     Settings,
     UserRound,
-    Shield,
-    LayoutDashboard,
 } from "lucide-react";
 
 import {
@@ -124,12 +122,9 @@ export function DashboardHeader({
 
         try {
             await authClient.signOut();
-
-            router.push(
-                "/auth/login"
-            );
-
-            router.refresh();
+            window.location.href = "/";
+        } catch {
+            window.location.href = "/";
         } finally {
             setSigningOut(false);
             setProfileOpen(false);
@@ -155,30 +150,6 @@ export function DashboardHeader({
             </Link>
 
             <div className="ml-auto flex items-center gap-2 md:gap-4">
-                {isAdmin && (
-                    <Link
-                        href={isInAdmin ? "/dashboard" : "/admin"}
-                        title={isInAdmin ? "Ver Plataforma Operativa y Diagnóstico" : "Ver Panel de Administración"}
-                        className={`hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition ${
-                            isInAdmin
-                                ? "border border-primary/20 bg-primary-light text-primary hover:bg-primary/10"
-                                : "border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                        }`}
-                    >
-                        {isInAdmin ? (
-                            <>
-                                <LayoutDashboard className="h-3.5 w-3.5" />
-                                <span>Plataforma Operativa</span>
-                            </>
-                        ) : (
-                            <>
-                                <Shield className="h-3.5 w-3.5 text-amber-700" />
-                                <span>Panel Administrador</span>
-                            </>
-                        )}
-                    </Link>
-                )}
-
                 <button
                     type="button"
                     aria-label="Notificaciones"
@@ -226,25 +197,6 @@ export function DashboardHeader({
                         <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-72 overflow-hidden rounded-2xl border border-border bg-surface shadow-xl">
 
                             <div className="p-2 space-y-1">
-                                {isAdmin && (
-                                    <Link
-                                        href={isInAdmin ? "/dashboard" : "/admin"}
-                                        onClick={() => setProfileOpen(false)}
-                                        className="flex items-center gap-3 rounded-xl bg-primary-light/40 px-3 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary-light"
-                                    >
-                                        {isInAdmin ? (
-                                            <>
-                                                <LayoutDashboard className="h-4 w-4" />
-                                                <span>Plataforma Operativa</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Shield className="h-4 w-4" />
-                                                <span>Panel Administrador</span>
-                                            </>
-                                        )}
-                                    </Link>
-                                )}
 
                                 <Link
                                     href={profilePath}

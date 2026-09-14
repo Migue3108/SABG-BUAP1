@@ -5,34 +5,57 @@ import {
   Bot,
   BookOpen,
   ArrowRight,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
-
 import { StartDiagnosisButton } from "@/components/municipal/dashboard/start-diagnosis-button";
 import Link from "next/link";
 import { routes } from "@/config/routes";
 
-export function MunicipalDashboardContent() {
+type CurrentUserProps = {
+  name: string;
+  email?: string;
+  role?: string;
+  institution?: string;
+  title?: string;
+};
+
+type MunicipalDashboardContentProps = {
+  currentUser?: CurrentUserProps;
+};
+
+export function MunicipalDashboardContent({
+  currentUser,
+}: MunicipalDashboardContentProps) {
   const { currentStep } = useMunicipalProgress();
+
+  const firstName = currentUser?.name
+    ? currentUser.name.trim().split(" ")[0]
+    : "Usuario";
+
+  const municipalityName = currentUser?.institution || "Municipio en Acompañamiento";
+  const areaOrTitle = currentUser?.title || "Enlace de Control y Evaluación";
+  const responsibleName = currentUser?.name || "Servidor Público Asignado";
 
   return (
     <>
       <main className="flex-1 bg-background px-4 py-6 md:px-6 md:py-8 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-8">
-          {/* Bienvenida */}
+          {/* Bienvenida dinámica */}
           <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8 lg:p-10">
             <div className="flex items-center justify-between gap-10">
               <div className="max-w-4xl">
                 <h1 className="text-2xl font-bold tracking-tight text-primary md:text-3xl lg:text-4xl lg:text-text-primary">
-                  ¡Hola, María!
+                  ¡Hola, {firstName}!
                 </h1>
 
                 <p className="mt-4 max-w-4xl text-sm leading-6 text-text-secondary md:text-base md:leading-7 lg:text-lg">
-                  Sistema de Administración de Bienes Gubernamentales.
-                  Inicie el proceso de diagnóstico para evaluar y
-                  gestionar el patrimonio municipal de manera eficiente
-                  y transparente.
+                  Bienvenido al Sistema de Acompañamiento del Buen Gobierno Municipal.
+                  Aquí podrás consultar el documento rector metodológico, evaluar
+                  las capacidades institucionales de tu demarcación e impulsar
+                  la transparencia y el control interno.
                 </p>
 
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -41,7 +64,7 @@ export function MunicipalDashboardContent() {
                     className="flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-3 text-sm font-semibold text-text-primary transition hover:border-primary hover:text-primary"
                   >
                     <BookOpen className="h-4 w-4" />
-                    Explorar capítulo 1
+                    Documento Rector (8 Capítulos)
                   </Link>
 
                   <StartDiagnosisButton />
@@ -76,30 +99,30 @@ export function MunicipalDashboardContent() {
             </div>
           </section>
 
-          {/* Municipio */}
+          {/* Información del Municipio / Adscripción Dinámica */}
           <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
             <header className="flex items-center gap-3 border-b border-border px-6 py-5 lg:px-8">
               <Building2 className="h-6 w-6 text-primary" />
 
               <h2 className="text-xl font-semibold text-primary">
-                Tu municipio
+                Tu adscripción y municipio
               </h2>
             </header>
 
             <div className="grid gap-6 px-6 py-6 md:grid-cols-2 lg:grid-cols-3 lg:px-8">
               <MunicipalInformation
-                label="Municipio"
-                value="Municipio Demo SABG-BUAP 001"
+                label="Municipio o Institución"
+                value={municipalityName}
               />
 
               <MunicipalInformation
-                label="Área"
-                value="Contraloría Municipal"
+                label="Área o Cargo"
+                value={areaOrTitle}
               />
 
               <MunicipalInformation
-                label="Responsable"
-                value="María Hernández López"
+                label="Servidor / Titular Responsable"
+                value={responsibleName}
               />
             </div>
           </section>

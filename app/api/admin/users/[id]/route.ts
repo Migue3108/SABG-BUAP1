@@ -60,10 +60,11 @@ export async function PATCH(
     }
 
     if (email !== undefined) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       const normalizedEmail = email.toLowerCase().trim();
-      if (!normalizedEmail.includes("@")) {
+      if (!emailRegex.test(normalizedEmail)) {
         return NextResponse.json(
-          { error: "El correo electrónico no es válido." },
+          { error: "El correo electrónico no tiene una estructura válida (ejemplo: usuario@municipio.gob.mx o usuario@correo.com)." },
           { status: 400 }
         );
       }

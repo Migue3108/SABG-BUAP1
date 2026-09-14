@@ -92,11 +92,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* BOTÓN 1 DE 2: Ingresar en el Header */}
-          <div>
+          {/* BOTONES: Conócenos + Ingresar en el Header */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/conocenos"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#dce3ea] bg-white hover:bg-slate-50 text-[#18212b] text-sm font-semibold transition-all hover:border-[#b8c6d4]"
+            >
+              <span>Conócenos</span>
+            </Link>
+
             <Link
               href="/auth/login"
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#315aa6] hover:bg-[#274b8f] text-white text-sm font-semibold shadow-xs transition-all hover:shadow-md active:scale-98"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#315aa6] hover:bg-[#274b8f] text-white text-sm font-semibold shadow-xs transition-all hover:shadow-md active:scale-98"
             >
               <Lock className="w-4 h-4" />
               <span>Ingresar</span>

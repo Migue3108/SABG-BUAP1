@@ -34,6 +34,7 @@ type DashboardSidebarProps = {
         logo?: string;
     };
 
+    helpPath?: string;
     mobile?: boolean;
     onClose?: () => void;
     onNavigate?: () => void;
@@ -56,6 +57,7 @@ const navigationIcons = {
 export function DashboardSidebar({
     navigation,
     organization,
+    helpPath = "/ayuda",
     mobile = false,
     onClose,
     onNavigate,
@@ -112,7 +114,7 @@ export function DashboardSidebar({
             {/* Centro de ayuda - siempre al fondo */}
             <div className="shrink-0 bg-surface px-4 pb-8 pt-4">
                 <Link
-                    href="/ayuda"
+                    href={helpPath}
                     onClick={onNavigate}
                     className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-text-secondary transition-colors hover:bg-background hover:text-primary"
                 >

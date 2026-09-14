@@ -123,9 +123,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!email || typeof email !== "string" || !email.includes("@")) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!email || typeof email !== "string" || !emailRegex.test(email.trim())) {
       return NextResponse.json(
-        { error: "El correo electrónico institucional no es válido." },
+        { error: "El correo electrónico no tiene una estructura válida (ejemplo: usuario@municipio.gob.mx o usuario@correo.com)." },
         { status: 400 }
       );
     }

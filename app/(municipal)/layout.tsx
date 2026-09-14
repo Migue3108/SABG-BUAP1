@@ -29,6 +29,8 @@ export default async function MunicipalLayout({
         role: true,
         active: true,
         mustChangePassword: true,
+        institution: true,
+        title: true,
       },
     });
 
@@ -38,6 +40,10 @@ export default async function MunicipalLayout({
 
   if (user.mustChangePassword) {
     redirect("/auth/first-login");
+  }
+
+  if (user.role === "admin") {
+    redirect("/admin");
   }
 
   const ROLE_LABELS: Record<string, string> = {
@@ -72,6 +78,10 @@ export default async function MunicipalLayout({
           role: displayRole,
           initials,
           email: session.user.email,
+        }}
+        organization={{
+          name: user.institution || "SABG–BUAP",
+          area: user.title || "Gestión Municipal",
         }}
       >
         {children}
