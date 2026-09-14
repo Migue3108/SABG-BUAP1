@@ -5,32 +5,32 @@ import { PhotoCarousel, CarouselItem } from "@/components/home/photo-carousel";
 
 const CAROUSEL_PHOTOS: CarouselItem[] = [
   {
-    src: "/carousel/sabg_reunion1.jfif",
+    src: "/carousel/sabg_reunion1.jpg",
     alt: "Reunión de trabajo SABG - BUAP con autoridades municipales",
     caption: "Acompañamiento y vinculación institucional con ayuntamientos del Estado de Puebla",
   },
   {
-    src: "/carousel/sabg_reunion2.jfif",
+    src: "/carousel/sabg_reunion2.jpg",
     alt: "Sesión de diagnóstico y evaluación municipal",
     caption: "Sesiones de trabajo técnico y metodológico con servidores públicos",
   },
   {
-    src: "/carousel/sabg_reunion3.jfif",
+    src: "/carousel/sabg_reunion3.jpg",
     alt: "Capacitación en control interno y gobernanza",
     caption: "Capacitación en control interno, transparencia y rendición de cuentas",
   },
   {
-    src: "/carousel/sabg_reunion4.jfif",
+    src: "/carousel/sabg_reunion4.jpg",
     alt: "Mesa de seguimiento del buen gobierno BUAP",
     caption: "Mesas de seguimiento y fortalecimiento de la gestión municipal",
   },
   {
-    src: "/carousel/sabg_reunion5.jfif",
+    src: "/carousel/sabg_reunion5.jpg",
     alt: "Participación y entrega de instrumentos de diagnóstico",
     caption: "Implementación de los instrumentos de diagnóstico en municipios",
   },
   {
-    src: "/carousel/sabg_reunion6.jfif",
+    src: "/carousel/sabg_reunion6.jpg",
     alt: "Colaboración interinstitucional BUAP y municipios de Puebla",
     caption: "Compromiso universitario con el desarrollo y la gobernanza municipal",
   },

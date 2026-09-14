@@ -86,6 +86,7 @@ export function PhotoCarousel({
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 className="object-cover"
                 priority={index === 0}
+                unoptimized
               />
               {/* Degradado inferior y pie de foto */}
               {item.caption && (
