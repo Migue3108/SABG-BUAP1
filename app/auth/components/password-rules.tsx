@@ -2,24 +2,46 @@ type PasswordRulesProps = {
     password: string;
 };
 
-const rules = [
+export const PASSWORD_RULES = [
     {
+        id: "length",
         label: "Mínimo 8 caracteres",
         validate: (password: string) => password.length >= 8,
     },
     {
-        label: "Al menos una letra mayúscula",
+        id: "upper",
+        label: "Al menos una letra mayúscula (A-Z)",
         validate: (password: string) => /[A-Z]/.test(password),
     },
     {
-        label: "Al menos un número",
+        id: "lower",
+        label: "Al menos una letra minúscula (a-z)",
+        validate: (password: string) => /[a-z]/.test(password),
+    },
+    {
+        id: "number",
+        label: "Al menos un número (0-9)",
         validate: (password: string) => /[0-9]/.test(password),
     },
     {
-        label: "Al menos un carácter especial",
+        id: "special",
+        label: "Al menos un carácter especial (!@#$%^&*...)",
         validate: (password: string) => /[^A-Za-z0-9]/.test(password),
     },
 ];
+
+export function validatePasswordComplexity(password: string): {
+    isValid: boolean;
+    failedRules: string[];
+} {
+    const failedRules = PASSWORD_RULES.filter((r) => !r.validate(password)).map(
+        (r) => r.label
+    );
+    return {
+        isValid: failedRules.length === 0,
+        failedRules,
+    };
+}
 
 export function PasswordRules({ password }: PasswordRulesProps) {
     return (
@@ -33,7 +55,7 @@ export function PasswordRules({ password }: PasswordRulesProps) {
             </h2>
 
             <ul className="space-y-1 text-xs">
-                {rules.map((rule) => {
+                {PASSWORD_RULES.map((rule) => {
                     const isValid = rule.validate(password);
 
                     return (

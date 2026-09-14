@@ -28,6 +28,7 @@ export default async function MunicipalLayout({
       select: {
         role: true,
         active: true,
+        mustChangePassword: true,
       },
     });
 
@@ -35,13 +36,23 @@ export default async function MunicipalLayout({
     redirect("/auth/login");
   }
 
-  if (user.role === "admin") {
-    redirect("/admin");
+  if (user.mustChangePassword) {
+    redirect("/auth/first-login");
   }
+
+  const ROLE_LABELS: Record<string, string> = {
+    admin: "Administrador Técnico",
+    coordinator: "Coordinación SABG–BUAP",
+    teacher: "Docente Asesor",
+    student: "Estudiante SS / PP",
+    municipal: "Enlace Municipal",
+  };
+
+  const displayRole = ROLE_LABELS[user.role] ?? "Usuario";
 
   const name =
     session.user.name ??
-    "Usuario municipal";
+    displayRole;
 
   const initials = name
     .split(" ")
@@ -58,7 +69,7 @@ export default async function MunicipalLayout({
       <MunicipalDashboardShell
         user={{
           name,
-          role: "Usuario municipal",
+          role: displayRole,
           initials,
           email: session.user.email,
         }}

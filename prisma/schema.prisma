@@ -12,30 +12,46 @@ enum UserRole {
   admin
   coordinator
   teacher
+  student
   municipal
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          UserRole  @default(municipal)
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  emailVerified      Boolean   @default(false)
+  image              String?
+  role               UserRole  @default(municipal)
+  active             Boolean   @default(true)
+  mustChangePassword Boolean   @default(true)
+  institution        String?
+  phone              String?
+  title              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  sessions           Session[]
+  accounts           Account[]
 
-  @@unique([email])
+  // Relaciones operativas
+  assignmentsAsStudent MunicipalAssignment[]  @relation("StudentAssignment")
+  assignmentsAsTeacher MunicipalAssignment[]  @relation("TeacherAssignment")
+  createdRoutes        ImplementationRoute[]  @relation("RouteCreator")
+  appliedInstruments   DiagnosticInstrument[] @relation("InstrumentApplier")
+  uploadedEvidences    Evidence[]             @relation("EvidenceUploader")
+  assignedReviews      Evidence[]             @relation("EvidenceReviewer")
+  reviewsGiven         Review[]               @relation("ReviewAuthor")
+  studentLogbooks      StudentLogbook[]       @relation("StudentLogbookAuthor")
+  auditLogs            AuditLog[]             @relation("AuditUser")
+  generatedReports     ExecutiveReport[]      @relation("ReportAuthor")
+
   @@map("user")
 }
 
 model Session {
-  id        String   @id
+  id        String   @id @default(uuid())
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -43,18 +59,16 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@index([userId])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(uuid())
   issuer                String
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -64,6 +78,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([issuer, accountId], map: "account_issuer_accountId_uidx")
   @@index([userId])
@@ -71,7 +86,7 @@ model Account {
 }
 
 model Verification {
-  id         String   @id
+  id         String   @id @default(uuid())
   identifier String
   value      String
   expiresAt  DateTime
@@ -80,4 +95,381 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Microregion {
+  id             String         @id @default(uuid())
+  code           String?        @unique
+  name           String
+  description    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  municipalities Municipality[]
+
+  @@map("microregions")
+}
+
+model Municipality {
+  id              String                 @id @default(uuid())
+  code            String?                @unique
+  name            String
+  microregionId   String?
+  microregion     Microregion?           @relation(fields: [microregionId], references: [id], onDelete: SetNull)
+  status          String                 @default("demo") // demo, incorporado, en_revision, inactivo
+  currentProgress Float                  @default(0)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  assignments      MunicipalAssignment[]
+  routes           ImplementationRoute[]
+  instruments      DiagnosticInstrument[]
+  evidences        Evidence[]
+  studentLogbooks  StudentLogbook[]
+  indicatorRecords IndicatorRecord[]
+  reports          ExecutiveReport[]
+
+  @@index([microregionId])
+  @@map("municipalities")
+}
+
+model MunicipalAssignment {
+  id             String        @id @default(uuid())
+  municipalityId String
+  municipality   Municipality  @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  studentId      String?
+  student        User?         @relation("StudentAssignment", fields: [studentId], references: [id], onDelete: SetNull)
+  teacherId      String?
+  teacher        User?         @relation("TeacherAssignment", fields: [teacherId], references: [id], onDelete: SetNull)
+  period         String        @default("2026-I")
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  logbooks       StudentLogbook[]
+
+  @@index([municipalityId])
+  @@index([studentId])
+  @@index([teacherId])
+  @@map("municipal_assignments")
+}
+
+model Chapter {
+  id             String                @id @default(uuid())
+  number         Int                   @unique
+  title          String
+  purpose        String
+  status         String                @default("activo") // activo, borrador
+  version        Int                   @default(1)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  annexes        Annex[]
+  practicalCases PracticalCase[]
+  prompts        InstitutionalPrompt[]
+  routes         ImplementationRoute[]
+  instruments    DiagnosticInstrument[]
+  evidences      Evidence[]
+  indicators     Indicator[]
+
+  @@map("chapters")
+}
+
+model Annex {
+  id          String   @id @default(uuid())
+  chapterId   String
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  code        String?
+  title       String
+  description String?
+  fileRef     String?
+  type        String   @default("formato") // formato, guia, checklist, infografia
+  status      String   @default("activo")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([chapterId])
+  @@map("annexes")
+}
+
+model PracticalCase {
+  id             String   @id @default(uuid())
+  chapterId      String
+  chapter        Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  title          String
+  situation      String
+  solution       String?
+  lessonsLearned String?
+  status         String   @default("activo")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([chapterId])
+  @@map("practical_cases")
+}
+
+model InstitutionalPrompt {
+  id         String   @id @default(uuid())
+  chapterId  String
+  chapter    Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  title      String
+  promptText String
+  targetRole String   @default("todos") // municipal, estudiante, docente, todos
+  riskLevel  String   @default("bajo") // bajo, medio, alto
+  status     String   @default("activo")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([chapterId])
+  @@map("institutional_prompts")
+}
+
+model ImplementationRoute {
+  id               String                 @id @default(uuid())
+  municipalityId   String
+  municipality     Municipality           @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  chapterId        String
+  chapter          Chapter                @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  declaredProblem  String
+  area             String                 @default("Contraloría Municipal")
+  stage            String                 @default("diagnostico_inicial") // diagnostico_inicial, planeacion, implementacion, seguimiento, evaluacion
+  status           String                 @default("activa") // activa, en_proceso, en_revision, observada, validada, concluida, archivada
+  productExpected  String?
+  indicatorMinimum String?
+  createdById      String?
+  createdBy        User?                  @relation("RouteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  instruments      DiagnosticInstrument[]
+  evidences        Evidence[]
+  indicatorRecords IndicatorRecord[]
+  reports          ExecutiveReport[]
+
+  @@index([municipalityId])
+  @@index([chapterId])
+  @@index([createdById])
+  @@map("implementation_routes")
+}
+
+model DiagnosticInstrument {
+  id                    String              @id @default(uuid())
+  routeId               String
+  route                 ImplementationRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  municipalityId        String
+  municipality          Municipality        @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  chapterId             String
+  chapter               Chapter             @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  appliedById           String?
+  appliedBy             User?               @relation("InstrumentApplier", fields: [appliedById], references: [id], onDelete: SetNull)
+  area                  String
+  responsibleName       String
+  applicationDate       DateTime            @default(now())
+  situation             String?
+  institutionalCapacity String?
+  mainProblem           String?
+  availableEvidence     String?
+  priority              String              @default("Media") // Alta, Media, Baja
+  initialRecommendation String?
+  status                String              @default("borrador") // borrador, en_revision, observado, validado
+  dataJson              Json?               // Desglose de preguntas: cualitativas, numéricas y de selección
+  submittedAt           DateTime?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  evidences             Evidence[]
+
+  @@index([routeId])
+  @@index([municipalityId])
+  @@index([chapterId])
+  @@index([appliedById])
+  @@map("diagnostic_instruments")
+}
+
+model Evidence {
+  id             String                @id @default(uuid())
+  routeId        String
+  route          ImplementationRoute   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  municipalityId String
+  municipality   Municipality          @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  chapterId      String
+  chapter        Chapter               @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  instrumentId   String?
+  instrument     DiagnosticInstrument? @relation(fields: [instrumentId], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedBy     User?                 @relation("EvidenceUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  reviewerId     String?
+  reviewer       User?                 @relation("EvidenceReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  type           String                @default("pdf") // pdf, formato, fotografia, minuta, reporte_tecnico, bitacora, otro
+  title          String
+  description    String?
+  classification String                @default("municipal_restringida") // publica, academica, municipal_restringida, sensible
+  status         String                @default("pendiente") // pendiente, en_proceso, en_revision, observado, validado, concluido, archivado
+  currentVersion Int                   @default(1)
+  fileUrl        String?
+  fileSize       Int?                  // En bytes, norma <= 1048576 (1MB)
+  mimeType       String?
+  reviewComment  String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  versions       EvidenceVersion[]
+  reviews        Review[]
+
+  @@index([routeId])
+  @@index([municipalityId])
+  @@index([chapterId])
+  @@index([instrumentId])
+  @@index([uploadedById])
+  @@index([reviewerId])
+  @@map("evidences")
+}
+
+model EvidenceVersion {
+  id            String   @id @default(uuid())
+  evidenceId    String
+  evidence      Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  versionNumber Int
+  fileUrl       String
+  fileSize      Int?
+  changeNotes   String?
+  createdAt     DateTime @default(now())
+
+  @@unique([evidenceId, versionNumber])
+  @@index([evidenceId])
+  @@map("evidence_versions")
+}
+
+model Review {
+  id             String        @id @default(uuid())
+  evidenceId     String
+  evidence       Evidence      @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  reviewerId     String?
+  reviewer       User?         @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: SetNull)
+  previousStatus String
+  newStatus      String        // observado, validado
+  comments       String
+  createdAt      DateTime      @default(now())
+
+  observations   Observation[]
+
+  @@index([evidenceId])
+  @@index([reviewerId])
+  @@map("reviews")
+}
+
+model Observation {
+  id                 String    @id @default(uuid())
+  reviewId           String
+  review             Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  observationText    String
+  requiresCorrection Boolean   @default(true)
+  isResolved         Boolean   @default(false)
+  resolvedAt         DateTime?
+  createdAt          DateTime  @default(now())
+
+  @@index([reviewId])
+  @@map("observations")
+}
+
+model StudentLogbook {
+  id             String               @id @default(uuid())
+  assignmentId   String?
+  assignment     MunicipalAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  studentId      String
+  student        User                 @relation("StudentLogbookAuthor", fields: [studentId], references: [id], onDelete: Cascade)
+  municipalityId String
+  municipality   Municipality         @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  date           DateTime             @default(now())
+  activityType   String               // visita_campo, reunion_enlace, revision_documental, capacitacion, gabinete
+  description    String
+  hoursSpent     Float?
+  commitments    String?
+  status         String               @default("borrador") // borrador, enviada, revisada_docente
+  teacherComment String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([assignmentId])
+  @@index([studentId])
+  @@index([municipalityId])
+  @@map("student_logbooks")
+}
+
+model Indicator {
+  id          String            @id @default(uuid())
+  chapterId   String
+  chapter     Chapter           @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  code        String            @unique
+  name        String
+  description String?
+  type        String            @default("numerico") // numerico, cualitativo, eleccion
+  formula     String?
+  unit        String?
+  status      String            @default("activo")
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  records     IndicatorRecord[]
+
+  @@index([chapterId])
+  @@map("indicators")
+}
+
+model IndicatorRecord {
+  id               String               @id @default(uuid())
+  indicatorId      String
+  indicator        Indicator            @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+  municipalityId   String
+  municipality     Municipality         @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  routeId          String?
+  route            ImplementationRoute? @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  valueNumeric     Float?
+  valueQualitative String?
+  valueChoice      String?
+  period           String               // ej. 2026-Q1
+  recordedAt       DateTime             @default(now())
+
+  @@index([indicatorId])
+  @@index([municipalityId])
+  @@index([routeId])
+  @@map("indicator_records")
+}
+
+model ExecutiveReport {
+  id             String               @id @default(uuid())
+  municipalityId String
+  municipality   Municipality         @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  routeId        String?
+  route          ImplementationRoute? @relation(fields: [routeId], references: [id], onDelete: SetNull)
+  generatedById  String?
+  generatedBy    User?                @relation("ReportAuthor", fields: [generatedById], references: [id], onDelete: SetNull)
+  reportType     String               @default("diagnostico_institucional")
+  period         String               @default("2026")
+  title          String
+  contentJson    Json
+  pdfUrl         String?
+  createdAt      DateTime             @default(now())
+
+  @@index([municipalityId])
+  @@index([routeId])
+  @@index([generatedById])
+  @@map("executive_reports")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
+  action      String   // CREAR_USUARIO, CAMBIO_PASSWORD, VALIDAR_EVIDENCIA, etc.
+  module      String   // AUTH, ADMIN, DIAGNOSTICO, EVIDENCIAS, etc.
+  entityType  String?
+  entityId    String?
+  detailsJson Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

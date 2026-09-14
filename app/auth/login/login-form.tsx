@@ -53,8 +53,7 @@ export function LoginForm() {
       ? await destinationResponse.json()
       : { redirectTo: "/dashboard" };
 
-    router.push(destination.redirectTo);
-    router.refresh();
+    window.location.href = destination.redirectTo || "/dashboard";
   }
 
   return (

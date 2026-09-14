@@ -25,6 +25,7 @@ async function main() {
                 name,
                 role: "admin",
                 active: true,
+                mustChangePassword: false,
                 emailVerified: true,
             },
         });

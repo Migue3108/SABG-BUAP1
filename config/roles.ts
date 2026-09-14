@@ -1,5 +1,6 @@
 export const ROLES = {
   MUNICIPAL: "municipal",
+  STUDENT: "student",
   TEACHER: "teacher",
   COORDINATOR: "coordinator",
   ADMIN: "admin",

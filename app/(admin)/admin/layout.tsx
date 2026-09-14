@@ -25,11 +25,16 @@ export default async function AdminLayout({
             name: true,
             role: true,
             active: true,
+            mustChangePassword: true,
         },
     });
 
     if (!user || !user.active || user.role !== "admin") {
         redirect(routes.dashboard);
+    }
+
+    if (user.mustChangePassword) {
+        redirect("/auth/first-login");
     }
 
     const initials = user.name

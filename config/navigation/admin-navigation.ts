@@ -34,6 +34,12 @@ export const adminNavigation: NavigationConfig = {
             icon: "users",
         },
         {
+            id: "admin-operational-platform",
+            label: "Plataforma Operativa",
+            path: routes.dashboard,
+            icon: "chapter",
+        },
+        {
             id: "admin-preferences",
             label: "Preferencias",
             path: routes.admin.preferences,
