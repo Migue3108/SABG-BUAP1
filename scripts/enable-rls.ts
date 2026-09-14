@@ -14,3 +14,4 @@ main()
         process.exitCode = 1;
     })
     .finally(() => prisma.$disconnect());
+

@@ -35,8 +35,9 @@ export function LoginForm() {
     });
 
     if (error) {
+      console.error("Error de autenticación:", error);
       setErrorMessage(
-        "El correo electrónico o la contraseña son incorrectos."
+        error.message || "El correo electrónico o la contraseña son incorrectos."
       );
       setIsLoading(false);
       return;
