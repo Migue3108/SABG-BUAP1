@@ -1,12 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Lock, Building2, ShieldCheck, Award, ArrowRight } from "lucide-react";
+import { PhotoCarousel, CarouselItem } from "@/components/home/photo-carousel";
+
+// Puedes colocar tus fotos dentro de public/carousel/ y agregarlas aquí:
+// Ejemplo: { src: "/carousel/foto-1.jpg", alt: "Evento de capacitación municipal", caption: "Acompañamiento a funcionarios municipales" }
+const CAROUSEL_PHOTOS: CarouselItem[] = [
+  // Aquí se enlazan las fotos que el usuario coloque en public/carousel/
+];
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#f5f7fa] text-[#18212b] font-sans antialiased flex flex-col justify-between">
       {/* =========================================================================
-          1. Franja Institucional Superior (Estilo gob.mx)
+          1. Franja Institucional Superior (Estilo gob.mx - Solo informativa)
          ========================================================================= */}
       <div className="bg-[#0b2341] text-white text-xs border-b border-[#1b3964]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-10 flex items-center justify-between">
@@ -20,18 +27,14 @@ export default function Home() {
             </span>
           </div>
 
-          <Link
-            href="/auth/login"
-            className="text-[#93c5fd] hover:text-white font-medium flex items-center gap-1.5 transition-colors text-xs"
-          >
-            <Lock className="w-3 h-3" />
-            <span>Acceso Autorizado</span>
-          </Link>
+          <div className="text-[11px] text-slate-400 hidden sm:block">
+            Portal Oficial de Acompañamiento Institucional
+          </div>
         </div>
       </div>
 
       {/* =========================================================================
-          2. Encabezado Principal
+          2. Encabezado Principal (CONTIENE BOTÓN 1 DE 2 PARA INGRESAR)
          ========================================================================= */}
       <header className="bg-white border-b border-[#dce3ea]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -62,7 +65,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Botón Principal Ingresar */}
+          {/* BOTÓN 1 DE 2: Ingresar en el Header */}
           <div>
             <Link
               href="/auth/login"
@@ -76,7 +79,7 @@ export default function Home() {
       </header>
 
       {/* =========================================================================
-          3. Hero Principal (Limpio, Institucional y Seguro)
+          3. Hero Principal (CONTIENE BOTÓN 2 DE 2 PARA INGRESAR)
          ========================================================================= */}
       <main className="flex-1 flex flex-col justify-center py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -91,14 +94,14 @@ export default function Home() {
             del Buen Gobierno
           </h1>
 
-          <p className="text-base sm:text-lg text-[#5f6b76] max-w-2xl mx-auto leading-relaxed mb-9">
+          <p className="text-base sm:text-lg text-[#5f6b76] max-w-2xl mx-auto leading-relaxed mb-8">
             Plataforma institucional de la Benemérita Universidad Autónoma de Puebla
             orientada a fortalecer las capacidades de gestión pública, control
             interno y rendición de cuentas en los gobiernos municipales del Estado
             de Puebla.
           </p>
 
-          {/* Botón Central de Ingreso */}
+          {/* BOTÓN 2 DE 2: Ingresar al Sistema en el Hero */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/auth/login"
@@ -119,9 +122,14 @@ export default function Home() {
         </div>
 
         {/* =======================================================================
-            4. 3 Pilares Básicos Informativos (Sin información interna)
+            4. Carrusel de Fotografías Institucionales
            ======================================================================= */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-14 w-full">
+        <PhotoCarousel items={CAROUSEL_PHOTOS} />
+
+        {/* =======================================================================
+            5. 3 Pilares Básicos Informativos
+           ======================================================================= */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-xl border border-[#dce3ea] shadow-2xs">
               <div className="w-10 h-10 rounded-lg bg-[#eaf0fa] text-[#315aa6] flex items-center justify-center mb-4">
@@ -166,7 +174,7 @@ export default function Home() {
       </main>
 
       {/* =========================================================================
-          5. Pie de Página Institucional (Estilo gob.mx)
+          6. Pie de Página Institucional (Estilo gob.mx - Sin botones duplicados)
          ========================================================================= */}
       <footer className="bg-[#0b2341] text-white border-t border-[#1b3964]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -190,16 +198,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Enlace al login */}
-            <div>
-              <Link
-                href="/auth/login"
-                className="text-xs text-[#93c5fd] hover:text-white font-semibold transition-colors flex items-center gap-1"
-              >
-                <span>Acceder a la plataforma</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            <p className="text-xs text-slate-400">
+              Gobierno Municipal del Estado de Puebla
+            </p>
           </div>
 
           <div className="border-t border-slate-800 mt-6 pt-5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
