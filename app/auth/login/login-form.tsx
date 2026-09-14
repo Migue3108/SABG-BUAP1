@@ -37,7 +37,8 @@ export function LoginForm() {
     if (error) {
       console.error("Error de autenticación:", error);
       setErrorMessage(
-        error.message || "El correo electrónico o la contraseña son incorrectos."
+        error.message ||
+          `Error del servidor (${(error as any).status || 500}). Revisa los logs de Vercel.`
       );
       setIsLoading(false);
       return;

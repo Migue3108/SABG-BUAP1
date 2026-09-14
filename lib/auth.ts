@@ -17,6 +17,7 @@ const getBaseURL = () => {
 };
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET || "Koo4UqzbaYV9+PB4HebaXD/eiw6fFdSFGMLysstFPsM=",
   baseURL: getBaseURL(),
   database: prismaAdapter(prisma, {
     provider: "postgresql",
