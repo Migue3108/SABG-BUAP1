@@ -70,12 +70,28 @@ export default async function MunicipalLayout({
     .join("")
     .toUpperCase();
 
+  const preference = await prisma.userPreference.findUnique({
+    where: { userId: session.user.id },
+    select: {
+      currentStep: true,
+      activeChapter: true,
+    },
+  });
+
+  const initialStep = (preference?.currentStep as any) || "not-started";
+  const initialChapter = preference?.activeChapter || 1;
+
   return (
-    <MunicipalProgressProvider>
+    <MunicipalProgressProvider
+      userId={session.user.id}
+      initialStep={initialStep}
+      initialChapter={initialChapter}
+    >
       <MunicipalDashboardShell
         user={{
           name,
           role: displayRole,
+          rawRole: user.role,
           initials,
           email: session.user.email,
         }}

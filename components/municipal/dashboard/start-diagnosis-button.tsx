@@ -15,11 +15,10 @@ export function StartDiagnosisButton() {
 
     function handleClick() {
         if (currentStep === "not-started") {
-            unlockChapter(2);
             setStep("diagnosis");
         }
 
-        router.push("/capitulo-2/diagnostico");
+        router.push("/capitulo-1");
     }
 
     return (
@@ -28,7 +27,7 @@ export function StartDiagnosisButton() {
             onClick={handleClick}
             className="rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
         >
-            Comenzar diagnóstico
+            Comenzar Capítulo 1
         </button>
     );
 }

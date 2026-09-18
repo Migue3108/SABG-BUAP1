@@ -12,9 +12,6 @@ import {
 import type { ReactNode } from "react";
 import type { MunicipalStep } from "@/types/workflow";
 
-const STORAGE_KEY = "sabg-current-step";
-const CHAPTER_STORAGE_KEY = "sabg-unlocked-chapter";
-
 const stepOrder: MunicipalStep[] = [
     "not-started",
     "diagnosis",
@@ -23,6 +20,12 @@ const stepOrder: MunicipalStep[] = [
     "evidence",
     "tracking",
 ];
+
+const getStepKey = (uid?: string) =>
+    uid ? `sabg-step-${uid}` : "sabg-current-step";
+
+const getChapterKey = (uid?: string) =>
+    uid ? `sabg-chapter-${uid}` : "sabg-unlocked-chapter";
 
 type MunicipalProgressContextValue = {
     currentStep: MunicipalStep;
@@ -44,6 +47,9 @@ const MunicipalProgressContext =
 
 type MunicipalProgressProviderProps = {
     children: ReactNode;
+    userId?: string;
+    initialStep?: MunicipalStep;
+    initialChapter?: number;
 };
 
 function isMunicipalStep(value: string): value is MunicipalStep {
@@ -52,81 +58,135 @@ function isMunicipalStep(value: string): value is MunicipalStep {
 
 export function MunicipalProgressProvider({
     children,
+    userId,
+    initialStep = "not-started",
+    initialChapter = 1,
 }: MunicipalProgressProviderProps) {
     const [currentStep, setCurrentStep] =
-        useState<MunicipalStep>("not-started");
+        useState<MunicipalStep>(initialStep);
     const [unlockedChapter, setUnlockedChapter] =
-        useState(1);
+        useState<number>(initialChapter);
 
     const [hydrated, setHydrated] = useState(false);
 
     useEffect(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        // 1. Purgar de inmediato claves globales anteriores para evitar que usuarios compartan progreso en la misma máquina
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("sabg-current-step");
+            localStorage.removeItem("sabg-unlocked-chapter");
+        }
+
+        const stepKey = getStepKey(userId);
+        const chapterKey = getChapterKey(userId);
+
+        // 2. Cargar clave exclusiva del usuario actual si existe en este dispositivo
+        const saved =
+            typeof window !== "undefined"
+                ? localStorage.getItem(stepKey)
+                : null;
 
         if (saved && isMunicipalStep(saved)) {
             setCurrentStep(saved);
+        } else if (initialStep) {
+            setCurrentStep(initialStep);
         }
 
-        const savedChapter = Number(
-            localStorage.getItem(CHAPTER_STORAGE_KEY)
-        );
+        const savedChapterStr =
+            typeof window !== "undefined"
+                ? localStorage.getItem(chapterKey)
+                : null;
 
-        if (
-            Number.isInteger(savedChapter) &&
-            savedChapter >= 1
-        ) {
+        const savedChapter = Number(savedChapterStr);
+
+        if (Number.isInteger(savedChapter) && savedChapter >= 1) {
             setUnlockedChapter(savedChapter);
+        } else if (initialChapter) {
+            setUnlockedChapter(initialChapter);
         }
 
         setHydrated(true);
-    }, []);
+
+        // 3. Sincronizar desde la base de datos para el usuario activo
+        async function syncDbProgress() {
+            try {
+                const res = await fetch("/api/user/progress");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.currentStep && isMunicipalStep(data.currentStep)) {
+                        setCurrentStep(data.currentStep);
+                        if (typeof window !== "undefined") {
+                            localStorage.setItem(stepKey, data.currentStep);
+                        }
+                    }
+                    if (
+                        typeof data.activeChapter === "number" &&
+                        data.activeChapter >= 1
+                    ) {
+                        setUnlockedChapter(data.activeChapter);
+                        if (typeof window !== "undefined") {
+                            localStorage.setItem(
+                                chapterKey,
+                                String(data.activeChapter)
+                            );
+                        }
+                    }
+                }
+            } catch {
+                // Silencioso si falla fetch en modo offline
+            }
+        }
+
+        syncDbProgress();
+    }, [userId, initialStep, initialChapter]);
 
     const persistStep = useCallback(
         (step: MunicipalStep) => {
             setCurrentStep((previousStep) => {
-                const previousIndex =
-                    stepOrder.indexOf(previousStep);
+                const previousIndex = stepOrder.indexOf(previousStep);
+                const nextIndex = stepOrder.indexOf(step);
 
-                const nextIndex =
-                    stepOrder.indexOf(step);
-
-                if (
-                    previousIndex !== -1 &&
-                    nextIndex < previousIndex
-                ) {
+                if (previousIndex !== -1 && nextIndex < previousIndex) {
                     return previousStep;
                 }
 
-                localStorage.setItem(
-                    STORAGE_KEY,
-                    step
-                );
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(getStepKey(userId), step);
+                }
+
+                // Guardar en la base de datos exclusivamente para este usuario
+                fetch("/api/user/progress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ currentStep: step }),
+                }).catch((err) => {
+                    console.warn("No se pudo guardar el paso en base de datos:", err);
+                });
 
                 return step;
             });
         },
-        []
+        [userId]
     );
 
     const currentIndex = stepOrder.indexOf(currentStep);
 
     const isUnlocked = useCallback(
         (step: MunicipalStep) => {
-            if (
-                currentStep === "not-started" &&
-                step === "diagnosis"
-            ) {
+            if (currentStep === "not-started" && step === "diagnosis") {
                 return true;
             }
 
-            return stepOrder.indexOf(step) <=
-                stepOrder.indexOf(currentStep);
+            return stepOrder.indexOf(step) <= stepOrder.indexOf(currentStep);
         },
         [currentStep]
     );
 
     const isChapterUnlocked = useCallback(
         (chapter: number) => {
+            // Capítulos 1 y 2 disponibles de manera inmediata para explorar
+            if (chapter <= 2) {
+                return true;
+            }
             return chapter <= unlockedChapter;
         },
         [unlockedChapter]
@@ -142,7 +202,7 @@ export function MunicipalProgressProvider({
     const completeStep = useCallback(
         (step: MunicipalStep) => {
             const stepIndex = stepOrder.indexOf(step);
-            const currentIndex = stepOrder.indexOf(currentStep);
+            const curIndex = stepOrder.indexOf(currentStep);
 
             if (stepIndex === -1) {
                 return;
@@ -154,27 +214,12 @@ export function MunicipalProgressProvider({
                 return;
             }
 
-            /*
-             * Caso especial:
-             * El diagnóstico es la primera etapa disponible.
-             *
-             * Aunque el usuario todavía esté en "not-started",
-             * si termina correctamente el diagnóstico debemos
-             * avanzar a "route".
-             */
-            if (
-                step === "diagnosis" &&
-                currentStep === "not-started"
-            ) {
+            if (step === "diagnosis" && currentStep === "not-started") {
                 persistStep("route");
                 return;
             }
 
-            /*
-             * Solo la etapa actual puede desbloquear
-             * la siguiente.
-             */
-            if (stepIndex !== currentIndex) {
+            if (stepIndex !== curIndex) {
                 return;
             }
 
@@ -192,15 +237,26 @@ export function MunicipalProgressProvider({
 
                 const nextChapter = chapter + 1;
 
-                localStorage.setItem(
-                    CHAPTER_STORAGE_KEY,
-                    String(nextChapter)
-                );
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(
+                        getChapterKey(userId),
+                        String(nextChapter)
+                    );
+                }
+
+                // Persistir en base de datos para el usuario activo
+                fetch("/api/user/progress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ activeChapter: nextChapter }),
+                }).catch((err) => {
+                    console.warn("No se pudo guardar el avance en base de datos:", err);
+                });
 
                 return nextChapter;
             });
         },
-        []
+        [userId]
     );
 
     const unlockChapter = useCallback(
@@ -210,15 +266,26 @@ export function MunicipalProgressProvider({
                     return previousChapter;
                 }
 
-                localStorage.setItem(
-                    CHAPTER_STORAGE_KEY,
-                    String(chapter)
-                );
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(
+                        getChapterKey(userId),
+                        String(chapter)
+                    );
+                }
+
+                // Persistir en base de datos para el usuario activo
+                fetch("/api/user/progress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ activeChapter: chapter }),
+                }).catch((err) => {
+                    console.warn("No se pudo guardar el desbloqueo en base de datos:", err);
+                });
 
                 return chapter;
             });
         },
-        []
+        [userId]
     );
 
     const value = useMemo(

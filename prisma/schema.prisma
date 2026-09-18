@@ -44,6 +44,8 @@ model User {
   studentLogbooks      StudentLogbook[]       @relation("StudentLogbookAuthor")
   auditLogs            AuditLog[]             @relation("AuditUser")
   generatedReports     ExecutiveReport[]      @relation("ReportAuthor")
+  chapterAssessments   ChapterAssessment[]
+  preference           UserPreference?
 
   @@map("user")
 }
@@ -473,3 +475,36 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model ChapterAssessment {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapterNumber   Int      @default(1)
+  responses       Json     // Lista de verificación: { itemId: "applies" | "partial" | "not-applies" }
+  score           Float    // Porcentaje de cumplimiento (0 a 100)
+  hasWarning      Boolean  @default(false)
+  warningNotes    String?
+  reflectionNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([chapterNumber])
+  @@map("chapter_assessments")
+}
+
+model UserPreference {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme         String   @default("light") // light, dark
+  shortcuts     Json?    // Array de hasta 3 atajos personalizados: [{ id, label, path, icon }]
+  currentStep   String   @default("not-started") // not-started, diagnosis, route, instrument, evidence, tracking
+  activeChapter Int      @default(1) // 1 a 8
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+

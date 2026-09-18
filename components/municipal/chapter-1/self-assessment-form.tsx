@@ -1,746 +1,556 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
+  AlertTriangle,
+  ArrowRight,
   CheckCircle2,
   ClipboardCheck,
+  FileText,
+  History,
   Info,
   RotateCcw,
   Save,
   Send,
+  Sparkles,
 } from "lucide-react";
 
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
+import { routes } from "@/config/routes";
 
-const STORAGE_KEY =
-  "sabg-chapter-1-self-assessment";
+const STORAGE_KEY = "sabg-chapter-1-self-assessment-v2";
 
-type AssessmentValue =
-  | "applies"
-  | "partial"
-  | "not-applies"
-  | "";
+type AssessmentValue = "applies" | "partial" | "not-applies" | "";
+type AssessmentAnswers = Record<string, AssessmentValue>;
 
-type AssessmentAnswers = Record<
-  string,
-  AssessmentValue
->;
-
-type ReflectionAnswers = {
-  mainProblems: string;
-  goodGovernanceApplication: string;
-  citizenImpact: string;
-};
-
-const components = [
+const CHECKLIST_ITEMS = [
   {
-    id: "transparency",
-    label:
-      "Transparencia y rendición de cuentas",
-    description:
-      "Apertura informativa y responsabilidad por el ejercicio de las funciones y el uso de los recursos públicos.",
+    id: "item-1",
+    number: "1",
+    title: "Identificación del problema municipal",
+    description: "Se identificó el problema municipal relacionado con el capítulo.",
+    guidance:
+      "Verifica si el ayuntamiento identificó claramente las debilidades institucionales, quejas ciudadanas o vacíos de información que afectan el buen gobierno.",
   },
   {
-    id: "social-needs",
-    label:
-      "Atención de demandas y necesidades sociales",
-    description:
-      "Orientación de la actuación municipal hacia las necesidades colectivas y la atención de grupos en situación de vulnerabilidad.",
+    id: "item-2",
+    number: "2",
+    title: "Revisión conceptual y responsables institucionales",
+    description: "Se revisaron los conceptos básicos y responsables institucionales.",
+    guidance:
+      "Comprueba el conocimiento de los principios de legalidad, transparencia y las responsabilidades del Presidente Municipal, Síndico y Cabildo.",
   },
   {
-    id: "participation",
-    label:
-      "Participación social",
-    description:
-      "Existencia de mecanismos para involucrar a ciudadanía, sociedad civil y sector privado.",
+    id: "item-3",
+    number: "3",
+    title: "Aplicación del instrumento correspondiente",
+    description: "Se aplicó el instrumento o anexo correspondiente.",
+    guidance:
+      "Asegura que se haya analizado el Anexo 1 del Capítulo 1 y sus herramientas de fundamentación jurídica y axiológica.",
   },
   {
-    id: "effective-institutions",
-    label:
-      "Instituciones eficaces, eficientes e inclusivas",
-    description:
-      "Capacidad institucional para obtener resultados, utilizar adecuadamente los recursos y garantizar acceso equitativo a los servicios públicos.",
+    id: "item-4",
+    number: "4",
+    title: "Generación del producto mínimo esperado",
+    description: "Se generó el producto mínimo esperado.",
+    guidance:
+      "El producto mínimo consiste en el Marco Conceptual formalizado de Buen Gobierno para las personas servidoras públicas del ayuntamiento.",
   },
   {
-    id: "public-servants",
-    label:
-      "Personas servidoras públicas íntegras y profesionales",
-    description:
-      "Personal capacitado, comprometido con la ética pública, la integridad y el desempeño profesional.",
+    id: "item-5",
+    number: "5",
+    title: "Conservación de evidencia para seguimiento",
+    description: "Se conservó evidencia suficiente para seguimiento.",
+    guidance:
+      "Confirma que existan minutas de trabajo, acuerdos o respaldos documentales listos para integrarse al expediente auditable.",
+  },
+  {
+    id: "item-6",
+    number: "6",
+    title: "Definición del siguiente paso de mejora municipal",
+    description: "Se definió el siguiente paso de mejora municipal.",
+    guidance:
+      "Valora si el ayuntamiento definió las áreas prioritarias para avanzar con éxito hacia el Capítulo 2: Diagnóstico Institucional Municipal.",
   },
 ] as const;
 
-const assessmentOptions = [
+const ASSESSMENT_OPTIONS = [
   {
     value: "applies" as const,
     label: "Se aplica",
+    colorClass:
+      "text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
+    badgeClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300",
   },
   {
     value: "partial" as const,
     label: "Parcialmente",
+    colorClass:
+      "text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+    badgeClass: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300",
   },
   {
     value: "not-applies" as const,
     label: "No se aplica",
+    colorClass:
+      "text-rose-700 bg-rose-50 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800",
+    badgeClass: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300",
   },
 ];
 
-const initialAssessment =
-  Object.fromEntries(
-    components.map((component) => [
-      component.id,
-      "",
-    ])
-  ) as AssessmentAnswers;
+const initialAnswers: AssessmentAnswers = Object.fromEntries(
+  CHECKLIST_ITEMS.map((item) => [item.id, ""])
+);
 
-const initialReflection: ReflectionAnswers = {
-  mainProblems: "",
-  goodGovernanceApplication: "",
-  citizenImpact: "",
+type PastAssessment = {
+  id: string;
+  score: number;
+  hasWarning: boolean;
+  warningNotes?: string | null;
+  reflectionNotes?: string | null;
+  createdAt: string;
 };
 
 export function SelfAssessmentForm() {
   const { completeChapter } = useMunicipalProgress();
 
-  const [
-    assessment,
-    setAssessment,
-  ] = useState<AssessmentAnswers>(
-    initialAssessment
-  );
+  const [answers, setAnswers] = useState<AssessmentAnswers>(initialAnswers);
+  const [reflectionNotes, setReflectionNotes] = useState("");
+  const [savedLocally, setSavedLocally] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{
+    score: number;
+    hasWarning: boolean;
+  } | null>(null);
+  const [pastAssessments, setPastAssessments] = useState<PastAssessment[]>([]);
 
-  const [
-    reflection,
-    setReflection,
-  ] = useState<ReflectionAnswers>(
-    initialReflection
-  );
-
-  const [
-    saved,
-    setSaved,
-  ] = useState(false);
-
-  const [
-    submitted,
-    setSubmitted,
-  ] = useState(false);
-
-  /*
-   * Recuperar borrador.
-   */
+  // Cargar borrador de localStorage
   useEffect(() => {
-    const stored =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
-
-    if (!stored) {
-      return;
-    }
-
-    try {
-      const parsed =
-        JSON.parse(stored);
-
-      if (parsed.assessment) {
-        setAssessment(
-          parsed.assessment
-        );
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.answers) setAnswers(parsed.answers);
+        if (parsed.reflectionNotes) setReflectionNotes(parsed.reflectionNotes);
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
       }
-
-      if (parsed.reflection) {
-        setReflection(
-          parsed.reflection
-        );
-      }
-    } catch {
-      localStorage.removeItem(
-        STORAGE_KEY
-      );
     }
   }, []);
 
-  const completedComponents =
-    useMemo(() => {
-      return Object.values(
-        assessment
-      ).filter(Boolean).length;
-    }, [assessment]);
+  // Consultar historial de la base de datos
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const res = await fetch("/api/municipal/chapter-1/assessment");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.history && Array.isArray(data.history)) {
+            setPastAssessments(data.history);
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo cargar el historial de la base de datos", err);
+      }
+    }
+    loadHistory();
+  }, []);
 
-  const assessmentComplete =
-    completedComponents ===
-    components.length;
+  const completedCount = useMemo(() => {
+    return Object.values(answers).filter(Boolean).length;
+  }, [answers]);
 
-  const reflectionComplete =
-    Object.values(
-      reflection
-    ).every(
-      (value) =>
-        value.trim() !== ""
+  const isFormComplete = completedCount === CHECKLIST_ITEMS.length;
+
+  // Lógica de advertencia: si alguna respuesta es "No se aplica" o "Parcialmente"
+  const hasWarning = useMemo(() => {
+    return Object.values(answers).some(
+      (val) => val === "not-applies" || val === "partial"
     );
+  }, [answers]);
 
-  const isFormValid =
-    assessmentComplete &&
-    reflectionComplete;
+  const progressPercent = Math.round(
+    (completedCount / CHECKLIST_ITEMS.length) * 100
+  );
 
-  const progress =
-    Math.round(
-      (completedComponents /
-        components.length) *
-      100
-    );
-
-  function handleAssessmentChange(
-    componentId: string,
-    value: AssessmentValue
-  ) {
-    setAssessment(
-      (previous) => ({
-        ...previous,
-        [componentId]: value,
-      })
-    );
-
-    setSaved(false);
-  }
-
-  function handleReflectionChange(
-    field: keyof ReflectionAnswers,
-    value: string
-  ) {
-    setReflection(
-      (previous) => ({
-        ...previous,
-        [field]: value,
-      })
-    );
-
-    setSaved(false);
+  function handleSelect(id: string, value: AssessmentValue) {
+    setAnswers((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+    setSavedLocally(false);
   }
 
   function handleSaveDraft() {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        assessment,
-        reflection,
+        answers,
+        reflectionNotes,
       })
     );
-
-    setSaved(true);
+    setSavedLocally(true);
   }
 
   function handleReset() {
-    setAssessment(
-      initialAssessment
-    );
-
-    setReflection(
-      initialReflection
-    );
-
-    localStorage.removeItem(
-      STORAGE_KEY
-    );
-
-    setSaved(false);
+    setAnswers(initialAnswers);
+    setReflectionNotes("");
+    localStorage.removeItem(STORAGE_KEY);
+    setSavedLocally(false);
   }
 
-  function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isFormComplete) return;
 
-    if (!isFormValid) {
-      return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/municipal/chapter-1/assessment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          responses: answers,
+          reflectionNotes,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Error al guardar en el servidor");
+      }
+
+      const result = await res.json();
+      localStorage.removeItem(STORAGE_KEY);
+
+      // Desbloquear avance al siguiente capítulo en el contexto del usuario
+      completeChapter(1);
+
+      setSubmittedData({
+        score: result.assessment.score,
+        hasWarning: result.assessment.hasWarning,
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Hubo un problema al guardar la autoevaluación. Inténtalo de nuevo.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    /*
-     * Temporal.
-     *
-     * Más adelante esta información
-     * se almacenará en la base de datos.
-     */
-    localStorage.removeItem(
-      STORAGE_KEY
-    );
-
-    completeChapter(1);
-    setSubmitted(true);
   }
 
-  if (submitted) {
+  if (submittedData) {
     return (
-      <SelfAssessmentCompleted />
+      <main className="flex-1 bg-background px-4 py-6 md:px-6 md:py-8 lg:p-8">
+        <div className="mx-auto max-w-3xl space-y-6">
+          <section className="rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+
+            <p className="mt-5 text-xs font-bold uppercase tracking-wider text-primary">
+              Capítulo 1 &bull; Autoevaluación Finalizada
+            </p>
+
+            <h1 className="mt-1 text-2xl font-black text-text-primary md:text-3xl">
+              ¡Lista de Verificación Municipal Guardada!
+            </h1>
+
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
+              Tu autoevaluación oficial ha sido registrada exitosamente en la base de datos.
+              El nivel de cumplimiento calculado para este capítulo es del{" "}
+              <strong className="text-primary font-bold">{submittedData.score}%</strong>.
+            </p>
+
+            {submittedData.hasWarning && (
+              <div className="mt-6 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-left">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-bold text-amber-900 dark:text-amber-300">
+                      Recomendación antes de iniciar el Capítulo 2
+                    </h3>
+                    <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                      Se registraron aspectos con estado <strong>Parcialmente</strong> o{" "}
+                      <strong>No se aplica</strong>. Te sugerimos revisar las recomendaciones del
+                      Capítulo 1 en territorio y consultar los anexos normativos para asegurar que tu
+                      ayuntamiento cuente con un marco institucional consolidado.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link
+                href={routes.chapter2.home}
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-primary-hover transition"
+              >
+                <span>Continuar al Capítulo 2 (Diagnóstico)</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <Link
+                href={routes.chapter1.home}
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-semibold text-text-secondary hover:bg-surface-soft transition"
+              >
+                <span>Volver al Capítulo 1</span>
+              </Link>
+            </div>
+          </section>
+        </div>
+      </main>
     );
   }
 
   return (
     <main className="flex-1 bg-background px-4 py-6 md:px-6 md:py-8 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Encabezado */}
+      <div className="mx-auto max-w-5xl space-y-6">
+        {/* Encabezado Institucional */}
         <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-sm font-semibold text-primary">
-                Capítulo 1
-              </p>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-xs font-bold text-primary mb-2">
+                <ClipboardCheck className="w-3.5 h-3.5" />
+                <span>Página 7 del Manual Rector Oficial</span>
+              </div>
 
-              <h1 className="mt-1 text-2xl font-bold text-text-primary md:text-3xl">
-                Autoevaluación de Buen Gobierno
+              <h1 className="text-2xl font-black text-text-primary md:text-3xl">
+                Lista de Verificación Municipal de Cierre
               </h1>
 
-              <p className="mt-3 text-sm leading-7 text-text-secondary">
-                Valora el nivel de aplicación de los
-                principales componentes del Buen Gobierno
-                dentro del municipio y reflexiona sobre
-                su situación actual.
+              <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                Instrumento rector de acreditación diagnóstica inicial del <strong>Capítulo 1</strong>.
+                Valora cada uno de los 6 reactivos señalados formalmente en el Manual de Buen Gobierno
+                y Gobernanza Municipal (Página 7).
               </p>
             </div>
 
-            <div className="min-w-56 rounded-xl border border-border bg-background p-4">
+            <div className="min-w-56 rounded-xl border border-border bg-surface-soft p-4 shrink-0">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-semibold text-text-secondary">
-                  Progreso
+                  Reactivos contestados
                 </p>
-
                 <p className="text-sm font-bold text-primary">
-                  {progress}%
+                  {completedCount} de {CHECKLIST_ITEMS.length}
                 </p>
               </div>
 
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
                 <div
                   className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                  }}
+                  style={{ width: `${progressPercent}%` }}
                 />
               </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Información */}
-        <section className="rounded-2xl border border-primary/20 bg-primary-light p-5">
-          <div className="flex gap-3">
-            <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-
-            <div>
-              <p className="text-sm font-semibold text-text-primary">
-                Antes de comenzar
-              </p>
-
-              <p className="mt-1 text-sm leading-6 text-text-secondary">
-                Selecciona la opción que mejor represente
-                la situación actual del municipio. Esta
-                autoevaluación busca identificar áreas
-                de oportunidad y no constituye una
-                calificación.
+              <p className="mt-2 text-[11px] text-text-muted text-right font-medium">
+                {progressPercent}% completado
               </p>
             </div>
           </div>
         </section>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {/* Componentes */}
-          <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
-            <header className="border-b border-border p-6 md:p-8">
-              <div className="flex items-center gap-3">
-                <ClipboardCheck className="h-5 w-5 text-primary" />
-
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    Parte 1
-                  </p>
-
-                  <h2 className="mt-1 text-xl font-bold text-text-primary">
-                    Autoevaluación de componentes
-                  </h2>
-                </div>
+        {/* Banner de Advertencia Dinámica en Vivo */}
+        {hasWarning && isFormComplete && (
+          <div className="rounded-2xl border border-amber-300 dark:border-amber-700/60 bg-amber-50/90 dark:bg-amber-950/30 p-5 shadow-sm animate-in fade-in-50 duration-200">
+            <div className="flex items-start gap-3.5">
+              <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-bold text-amber-900 dark:text-amber-300">
+                  Advertencia: Favor de revisar la información una vez más antes de continuar al Capítulo 2
+                </h3>
+                <p className="mt-1 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                  Has marcado reactivos como <strong>Parcialmente</strong> o{" "}
+                  <strong>No se aplica</strong>. Puedes guardar y continuar, pero se recomienda
+                  analizar con el Cabildo o con tu Docente Asesor los puntos pendientes para que no se
+                  conviertan en debilidades durante el Diagnóstico Municipal del Capítulo 2.
+                </p>
               </div>
+            </div>
+          </div>
+        )}
 
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-text-secondary">
-                Indica el nivel de aplicación actual de
-                cada componente del Buen Gobierno.
-              </p>
+        {/* Guía informativa */}
+        <section className="rounded-xl border border-primary/20 bg-primary-light p-4 text-xs text-text-secondary flex items-start gap-3">
+          <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <p>
+            Responde con objetividad técnica la situación que guarda actualmente tu ayuntamiento.
+            Esta evaluación no es punitiva; sirve de línea base oficial para el acompañamiento BUAP.
+          </p>
+        </section>
+
+        {/* Formulario de los 6 Reactivos */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+            <header className="border-b border-border bg-surface-soft/60 p-5 md:px-8">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-primary">
+                Reactivos Oficiales de la Lista de Verificación
+              </h2>
             </header>
 
-            {/* Desktop */}
-            <div className="hidden md:block">
-              <div className="grid grid-cols-[minmax(280px,1fr)_repeat(3,140px)] border-b border-border bg-background px-6 py-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                  Componente
-                </p>
+            <div className="divide-y divide-border">
+              {CHECKLIST_ITEMS.map((item) => {
+                const selectedValue = answers[item.id];
 
-                {assessmentOptions.map(
-                  (option) => (
-                    <p
-                      key={
-                        option.value
-                      }
-                      className="text-center text-xs font-semibold text-text-secondary"
-                    >
-                      {option.label}
-                    </p>
-                  )
-                )}
-              </div>
-
-              {components.map(
-                (
-                  component,
-                  index
-                ) => (
-                  <div
-                    key={
-                      component.id
-                    }
-                    className={[
-                      "grid grid-cols-[minmax(280px,1fr)_repeat(3,140px)] items-center px-6 py-5",
-                      index <
-                        components.length -
-                        1
-                        ? "border-b border-border"
-                        : "",
-                    ].join(" ")}
-                  >
-                    <div className="pr-5">
-                      <p className="text-sm font-semibold text-text-primary">
-                        {
-                          component.label
-                        }
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-text-secondary">
-                        {
-                          component.description
-                        }
-                      </p>
-                    </div>
-
-                    {assessmentOptions.map(
-                      (option) => (
-                        <label
-                          key={
-                            option.value
-                          }
-                          className="flex cursor-pointer justify-center"
-                        >
-                          <input
-                            type="radio"
-                            name={
-                              component.id
-                            }
-                            value={
-                              option.value
-                            }
-                            checked={
-                              assessment[
-                              component.id
-                              ] ===
-                              option.value
-                            }
-                            onChange={() =>
-                              handleAssessmentChange(
-                                component.id,
-                                option.value
-                              )
-                            }
-                            className="h-4 w-4 appearance-none rounded-full border-2 border-text-muted bg-surface transition-colors checked:border-primary checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
-
-                          <span className="sr-only">
-                            {
-                              option.label
-                            }
+                return (
+                  <div key={item.id} className="p-5 md:p-6 transition hover:bg-surface-soft/40">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      <div className="max-w-xl">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                            {item.number}
                           </span>
-                        </label>
-                      )
-                    )}
-                  </div>
-                )
-              )}
-            </div>
+                          <h3 className="text-sm font-bold text-text-primary">
+                            {item.title}
+                          </h3>
+                        </div>
 
-            {/* Mobile */}
-            <div className="space-y-4 p-4 md:hidden">
-              {components.map(
-                (component) => (
-                  <article
-                    key={
-                      component.id
-                    }
-                    className="rounded-xl border border-border bg-background p-4"
-                  >
-                    <p className="text-sm font-semibold text-text-primary">
-                      {
-                        component.label
-                      }
-                    </p>
+                        <p className="text-xs font-semibold text-primary mt-1">
+                          &ldquo;{item.description}&rdquo;
+                        </p>
 
-                    <p className="mt-1 text-xs leading-5 text-text-secondary">
-                      {
-                        component.description
-                      }
-                    </p>
+                        <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
+                          {item.guidance}
+                        </p>
+                      </div>
 
-                    <div className="mt-4 space-y-2">
-                      {assessmentOptions.map(
-                        (option) => (
-                          <label
-                            key={
-                              option.value
-                            }
-                            className={[
-                              "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm transition",
-                              assessment[
-                                component.id
-                              ] ===
-                                option.value
-                                ? "border-primary bg-primary-light font-medium text-primary"
-                                : "border-border bg-surface text-text-secondary",
-                            ].join(
-                              " "
-                            )}
-                          >
-                            <input
-                              type="radio"
-                              name={
-                                component.id
-                              }
-                              value={
-                                option.value
-                              }
-                              checked={
-                                assessment[
-                                component.id
-                                ] ===
-                                option.value
-                              }
-                              onChange={() =>
-                                handleAssessmentChange(
-                                  component.id,
-                                  option.value
-                                )
-                              }
-                              className="h-4 w-4 appearance-none rounded-full border-2 border-text-muted bg-surface transition-colors checked:border-primary checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                            />
+                      {/* Botones de Opción */}
+                      <div className="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
+                        {ASSESSMENT_OPTIONS.map((opt) => {
+                          const isSelected = selectedValue === opt.value;
 
-                            {
-                              option.label
-                            }
-                          </label>
-                        )
-                      )}
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => handleSelect(item.id, opt.value)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition flex items-center gap-1.5 ${
+                                isSelected
+                                  ? `${opt.colorClass} ring-2 ring-primary/20 shadow-xs`
+                                  : "border-border bg-surface text-text-secondary hover:border-primary/40 hover:text-text-primary"
+                              }`}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  isSelected ? "bg-current" : "bg-border"
+                                }`}
+                              />
+                              <span>{opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </article>
-                )
-              )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 
-          {/* Reflexión */}
-          <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                Parte 2
-              </p>
-
-              <h2 className="mt-1 text-xl font-bold text-text-primary">
-                Reflexión municipal
-              </h2>
-
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                Responde brevemente considerando la
-                situación actual del municipio.
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-6">
-              <ReflectionField
-                id="mainProblems"
-                label="Principales problemas del municipio"
-                description="¿Cuáles son los principales problemas o áreas de oportunidad que actualmente enfrenta el municipio?"
-                placeholder="Describe los principales problemas identificados..."
-                value={
-                  reflection.mainProblems
-                }
-                onChange={(value) =>
-                  handleReflectionChange(
-                    "mainProblems",
-                    value
-                  )
-                }
-              />
-
-              <ReflectionField
-                id="goodGovernanceApplication"
-                label="Aplicación de principios de Buen Gobierno"
-                description="¿Cómo se aplican actualmente los principios de Buen Gobierno dentro de la administración municipal?"
-                placeholder="Describe cómo se aplican actualmente estos principios..."
-                value={
-                  reflection.goodGovernanceApplication
-                }
-                onChange={(value) =>
-                  handleReflectionChange(
-                    "goodGovernanceApplication",
-                    value
-                  )
-                }
-              />
-
-              <ReflectionField
-                id="citizenImpact"
-                label="Impacto en la ciudadanía"
-                description="¿De qué manera la gestión municipal actual impacta en la ciudadanía?"
-                placeholder="Describe el impacto que observas en la ciudadanía..."
-                value={
-                  reflection.citizenImpact
-                }
-                onChange={(value) =>
-                  handleReflectionChange(
-                    "citizenImpact",
-                    value
-                  )
-                }
-              />
-            </div>
+          {/* Observaciones Generales */}
+          <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-text-primary mb-1">
+              Observaciones Municipales y Notas de Contexto (Opcional)
+            </h3>
+            <p className="text-xs text-text-secondary mb-3">
+              Puedes detallar circunstancias especiales, acuerdos de cabildo o consideraciones del municipio.
+            </p>
+            <textarea
+              rows={3}
+              value={reflectionNotes}
+              onChange={(e) => {
+                setReflectionNotes(e.target.value);
+                setSavedLocally(false);
+              }}
+              placeholder="Ejemplo: Se cuenta con acuerdo de cabildo de fecha 15 de enero; pendiente publicación en bando oficial..."
+              className="w-full resize-none rounded-xl border border-border bg-background p-3 text-xs text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
           </section>
 
-          {/* Acciones */}
+          {/* Acciones del Formulario */}
           <section className="flex flex-col-reverse gap-3 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              onClick={
-                handleReset
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-background"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-soft transition"
             >
-              <RotateCcw className="h-4 w-4" />
-
-              Limpiar respuestas
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Limpiar respuestas</span>
             </button>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={
-                  handleSaveDraft
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-background"
+                onClick={handleSaveDraft}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-soft transition"
               >
-                <Save className="h-4 w-4" />
-
-                {saved
-                  ? "Borrador guardado"
-                  : "Guardar borrador"}
+                <Save className="h-3.5 w-3.5" />
+                <span>{savedLocally ? "Borrador guardado en equipo" : "Guardar borrador"}</span>
               </button>
 
               <button
                 type="submit"
-                disabled={
-                  !isFormValid
-                }
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!isFormComplete || isSubmitting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Finalizar autoevaluación
-
-                <Send className="h-4 w-4" />
+                {isSubmitting ? (
+                  <span>Guardando en base de datos...</span>
+                ) : (
+                  <>
+                    <span>Guardar y Finalizar Autoevaluación</span>
+                    <Send className="h-3.5 w-3.5" />
+                  </>
+                )}
               </button>
             </div>
           </section>
         </form>
+
+        {/* Historial de Evaluaciones Anteriores (si existen en la base de datos) */}
+        {pastAssessments.length > 0 && (
+          <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-bold text-text-primary">
+                Historial de Evaluaciones Registradas ({pastAssessments.length})
+              </h3>
+            </div>
+
+            <div className="space-y-2">
+              {pastAssessments.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3 rounded-xl border border-border bg-surface-soft/50 text-xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-primary">#{pastAssessments.length - idx}</span>
+                    <span className="text-text-secondary">
+                      {new Date(item.createdAt).toLocaleDateString("es-MX", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-text-primary">Puntaje: {item.score}%</span>
+                    {item.hasWarning ? (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 text-[10px] font-bold">
+                        Con observaciones
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 text-[10px] font-bold">
+                        100% Cumplido
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
-    </main>
-  );
-}
-
-function ReflectionField({
-  id,
-  label,
-  description,
-  placeholder,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  description: string;
-  placeholder: string;
-  value: string;
-  onChange: (
-    value: string
-  ) => void;
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="text-sm font-semibold text-text-primary"
-      >
-        {label}
-
-        <span className="ml-1 text-primary">
-          *
-        </span>
-      </label>
-
-      <p className="mt-1 text-xs leading-5 text-text-secondary">
-        {description}
-      </p>
-
-      <textarea
-        id={id}
-        required
-        rows={4}
-        value={value}
-        onChange={(event) =>
-          onChange(
-            event.target.value
-          )
-        }
-        placeholder={
-          placeholder
-        }
-        className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-      />
-    </div>
-  );
-}
-
-function SelfAssessmentCompleted() {
-  return (
-    <main className="flex-1 bg-background px-4 py-6 md:px-6 md:py-8 lg:p-8">
-      <section className="mx-auto max-w-3xl rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-light text-primary">
-          <CheckCircle2 className="h-7 w-7" />
-        </div>
-
-        <p className="mt-5 text-sm font-semibold text-primary">
-          Capítulo 1
-        </p>
-
-        <h1 className="mt-1 text-2xl font-bold text-text-primary">
-          Autoevaluación completada
-        </h1>
-
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-text-secondary">
-          Las respuestas de la autoevaluación fueron
-          registradas correctamente. Más adelante esta
-          información permitirá integrar el seguimiento
-          del capítulo.
-        </p>
-      </section>
     </main>
   );
 }

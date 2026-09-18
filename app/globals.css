@@ -51,6 +51,58 @@
   --shadow-card: 0 4px 16px rgb(24 33 43 / 8%);
 }
 
+.dark, [data-theme="dark"] {
+  /* ---------- Base Dark ---------- */
+  --background: #0b1320;
+  --foreground: #f1f5f9;
+
+  /* ---------- Brand Dark ---------- */
+  --primary: #4f85e2;
+  --primary-dark: #3b6ec2;
+  --primary-light: #16243b;
+
+  --secondary: #2563eb;
+
+  /* ---------- Surfaces Dark ---------- */
+  --surface: #121d2d;
+  --surface-soft: #172437;
+
+  /* ---------- Text Dark ---------- */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-on-primary: #ffffff;
+
+  /* ---------- Borders Dark ---------- */
+  --border: #22344d;
+  --border-hover: #334b6e;
+
+  /* ---------- Shadows Dark ---------- */
+  --shadow-card: 0 4px 16px rgb(0 0 0 / 50%);
+}
+
+/* =========================================================
+   Garantía de estilo original institucional para autenticación
+   ========================================================= */
+.auth-theme-forced {
+  --background: #f5f7fa !important;
+  --foreground: #18212b !important;
+  --primary: #315aa6 !important;
+  --primary-dark: #274b8f !important;
+  --primary-light: #eaf0fa !important;
+  --secondary: #174a91 !important;
+  --surface: #ffffff !important;
+  --surface-soft: #f7f9fc !important;
+  --text-primary: #18212b !important;
+  --text-secondary: #5f6b76 !important;
+  --text-muted: #7b8494 !important;
+  --text-on-primary: #ffffff !important;
+  --border: #dce3ea !important;
+  --border-hover: #bfc9d6 !important;
+  --shadow-card: 0 4px 16px rgb(24 33 43 / 8%) !important;
+  color-scheme: light !important;
+}
+
 
 /* =========================================================
    Tailwind Theme

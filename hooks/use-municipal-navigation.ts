@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { municipalNavigationBase } from "@/config/navigation/municipal-navigation";
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
 
-export function useMunicipalNavigation() {
+export function useMunicipalNavigation(_role?: string) {
     const {
         isUnlocked,
         isChapterUnlocked,

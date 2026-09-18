@@ -11,6 +11,7 @@ type MunicipalDashboardShellProps = {
     user: {
         name: string;
         role: string;
+        rawRole?: string;
         initials?: string;
         email?: string;
     };
@@ -27,7 +28,7 @@ export function MunicipalDashboardShell({
     user,
     organization,
 }: MunicipalDashboardShellProps) {
-    const navigation = useMunicipalNavigation();
+    const navigation = useMunicipalNavigation(user.rawRole);
 
     return (
         <DashboardShell

@@ -169,7 +169,7 @@ function AdminLink({ href, label }: { href: string; label: string }) {
     return (
         <Link
             href={href}
-            className="flex items-center justify-between rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-primary transition hover:bg-white"
+            className="flex items-center justify-between rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-primary transition hover:bg-surface-soft"
         >
             {label}
             <ArrowRight className="h-4 w-4" />

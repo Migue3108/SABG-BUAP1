@@ -132,7 +132,7 @@ export function MunicipalitySelect({
           {/* Results list */}
           <div className="max-h-56 overflow-y-auto p-1 text-xs">
             {/* 217 Municipios */}
-            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#174a91] bg-slate-50 rounded">
+            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary bg-surface-soft rounded">
               Municipios del Estado de Puebla ({filteredMunicipalities.length})
             </div>
 
@@ -164,7 +164,7 @@ export function MunicipalitySelect({
             {/* Dependencias Universitarias / Académicas */}
             {filteredAffiliations.length > 0 && (
               <>
-                <div className="mt-2 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#315aa6] bg-slate-50 rounded">
+                <div className="mt-2 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary bg-surface-soft rounded">
                   Dependencias Universitarias e Institucionales ({filteredAffiliations.length})
                 </div>
                 {filteredAffiliations.map((affiliation) => {
@@ -193,3 +193,4 @@ export function MunicipalitySelect({
     </div>
   );
 }
+

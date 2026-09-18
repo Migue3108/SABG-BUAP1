@@ -38,7 +38,7 @@ const CAROUSEL_PHOTOS: CarouselItem[] = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f5f7fa] text-[#18212b] font-sans antialiased flex flex-col justify-between">
+    <div className="auth-theme-forced min-h-screen bg-[#f5f7fa] text-[#18212b] font-sans antialiased flex flex-col justify-between">
       {/* =========================================================================
           1. Franja Institucional Superior (Estilo gob.mx - Solo informativa)
          ========================================================================= */}

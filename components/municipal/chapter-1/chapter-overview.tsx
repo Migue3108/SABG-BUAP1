@@ -8,211 +8,35 @@ import {
   ShieldCheck,
   CheckCircle2,
   Users,
-  Sparkles,
   Landmark,
   Compass,
+  FileText,
   FileCheck,
-  Eye,
-  HeartHandshake,
-  TrendingUp,
+  ExternalLink,
+  ChevronDown,
   ArrowRight,
   ClipboardCheck,
-  Layers,
-  ChevronRight,
   Award,
+  Layers,
+  HelpCircle,
+  Briefcase,
 } from "lucide-react";
 
 import { routes } from "@/config/routes";
 
-type ChapterData = {
-  number: number;
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: React.ElementType;
-  badge: string;
-  objective: string;
-  whyItMatters: string;
-  tools: string[];
-  deliverable: string;
-  actionRoute?: string;
-  actionText?: string;
-};
-
-const CHAPTERS_CATALOG: ChapterData[] = [
-  {
-    number: 1,
-    id: "cap-1",
-    title: "Fundamentos del Buen Gobierno y Gobernanza Municipal",
-    subtitle: "Marco conceptual, axiológico y normativo",
-    icon: Scale,
-    badge: "Marco Rector",
-    objective:
-      "Reconocer los principios, componentes y fundamentos jurídicos (Constitución Federal, Estatal y Ley Orgánica Municipal) que orientan una administración pública municipal íntegra, transparente y con vocación de servicio.",
-    whyItMatters:
-      "Proporciona la certeza legal y la base de legitimidad institucional necesaria antes de aplicar cualquier instrumento de planeación o diagnóstico en el ayuntamiento.",
-    tools: [
-      "Marco axiológico de 6 valores fundamentales (Legalidad, Integridad, Transparencia, Rendición de cuentas, Eficiencia y Participación).",
-      "Cédula de Autoevaluación de Fundamentos del Buen Gobierno.",
-      "Mapeo de atribuciones y competencias del Cabildo y dependencias.",
-    ],
-    deliverable:
-      "Adopción formal de los Principios de Buen Gobierno en sesión de Cabildo y acreditación diagnóstica inicial.",
-    actionRoute: routes.chapter1.selfAssessment,
-    actionText: "Iniciar autoevaluación del Cap. 1",
-  },
-  {
-    number: 2,
-    id: "cap-2",
-    title: "Diagnóstico Institucional Municipal",
-    subtitle: "Evaluación situacional de capacidades y áreas críticas",
-    icon: ClipboardCheck,
-    badge: "Diagnóstico",
-    objective:
-      "Evaluar de manera objetiva el estado de las capacidades organizacionales, normativas, tecnológicas y operativas en las dependencias de la administración municipal.",
-    whyItMatters:
-      "Permite identificar vacíos administrativos, duplicidad de procesos, riesgos de opacidad y requerimientos presupuestales antes de formular planes o proyectos de inversión.",
-    tools: [
-      "Lista de verificación institucional en 4 dimensiones (Planeación, Organización, Operación y Control).",
-      "Matriz de hallazgos y brechas institucionales.",
-      "Cuestionarios de capacidad de respuesta municipal.",
-    ],
-    deliverable:
-      "Cédula de Diagnóstico Institucional y Matriz de Hallazgos Priorizados con semáforo de riesgo.",
-    actionRoute: routes.chapter2.home,
-    actionText: "Ir a Diagnóstico Municipal (Cap. 2)",
-  },
-  {
-    number: 3,
-    id: "cap-3",
-    title: "Planeación Estratégica Municipal",
-    subtitle: "Alineación y metas cuantificables",
-    icon: Compass,
-    badge: "Estrategia",
-    objective:
-      "Guiar la elaboración del Plan Municipal de Desarrollo (PMD) con visión plurianual, indicadores de desempeño y alineación estricta a los planes Estatal y Federal.",
-    whyItMatters:
-      "Erradica la improvisación y asegura que el gasto público municipal esté directamente vinculado a objetivos prioritarios y demandas sentidas de la población.",
-    tools: [
-      "Metodología de Marco Lógico y Árbol de Problemas/Objetivos.",
-      "Matriz de Indicadores para Resultados (MIR).",
-      "Fichas técnicas para el diseño de indicadores (KPIs).",
-    ],
-    deliverable:
-      "Estructura programática del Plan Municipal de Desarrollo con metas evaluables e indicadores vinculados al presupuesto.",
-  },
-  {
-    number: 4,
-    id: "cap-4",
-    title: "Control Interno y Gestión de Riesgos",
-    subtitle: "Mecanismos preventivos y blindaje administrativo",
-    icon: ShieldCheck,
-    badge: "Control Interno",
-    objective:
-      "Implementar el Sistema de Control Interno Institucional y la administración activa de riesgos que puedan obstaculizar las metas gubernamentales o propiciar irregularidades.",
-    whyItMatters:
-      "Previene desvíos de fondos, evita observaciones y pliegos de cargos de la Auditoría Superior del Estado (ASE) y protege el patrimonio municipal.",
-    tools: [
-      "Modelo de Control Interno COSO adaptado a municipios de Puebla.",
-      "Metodología de Identificación y Evaluación de Riesgos.",
-      "Matriz y Mapa de Calor de Riesgos Institucionales.",
-    ],
-    deliverable:
-      "Programa Anual de Control Interno (PACI) y Mapa de Riesgos Institucional aprobado por el Órgano Interno de Control.",
-  },
-  {
-    number: 5,
-    id: "cap-5",
-    title: "Transparencia y Rendición de Cuentas",
-    subtitle: "Gobierno abierto y acceso a la información pública",
-    icon: Eye,
-    badge: "Transparencia",
-    objective:
-      "Garantizar el cumplimiento al 100% de las obligaciones de transparencia activa, versiones públicas de contratos y respuesta expedita a solicitudes ciudadanas.",
-    whyItMatters:
-      "Recupera la confianza ciudadana, evita multas y medidas de apremio del órgano garante (ITAIPUE) y consolida una gestión visible y auditable.",
-    tools: [
-      "Catálogo de Obligaciones Comunes y Específicas de la Ley de Transparencia de Puebla.",
-      "Guía práctica para elaboración de versiones públicas (protección de datos personales).",
-      "Protocolo de gestión de la Unidad de Transparencia Municipal.",
-    ],
-    deliverable:
-      "Portal de Transparencia Municipal actualizado, expedientes clasificados y protocolo de atención ciudadana.",
-  },
-  {
-    number: 6,
-    id: "cap-6",
-    title: "Integridad y Ética Pública",
-    subtitle: "Conducta, valores y prevención de faltas administrativas",
-    icon: Sparkles,
-    badge: "Integridad",
-    objective:
-      "Fomentar un clima organizacional basado en valores éticos, vocación de servicio y prevención activa de conflictos de interés y conductas irregulares.",
-    whyItMatters:
-      "La integridad es el pilar preventivo más eficaz contra la corrupción, el nepotismo, el desvío de recursos y el abuso de autoridad.",
-    tools: [
-      "Modelo de Código de Ética y Código de Conducta Municipal.",
-      "Lineamientos para la instalación del Comité de Ética.",
-      "Protocolo de canalización y atención de quejas y denuncias con anonimato.",
-    ],
-    deliverable:
-      "Código de Ética publicado formalmente, Comité de Ética en funciones y buzón institucional de denuncia ciudadana.",
-  },
-  {
-    number: 7,
-    id: "cap-7",
-    title: "Participación Ciudadana y Gobernanza",
-    subtitle: "Corresponsabilidad vecinal y contraloría social",
-    icon: HeartHandshake,
-    badge: "Participación",
-    objective:
-      "Establecer mecanismos permanentes y estructurados de consulta ciudadana, cabildo abierto, presupuesto participativo y contraloría social en obras comunitarias.",
-    whyItMatters:
-      "La gobernanza moderna implica tomar decisiones en conjunto con la sociedad; la participación comunitaria asegura que las obras respondan a necesidades reales y perduren.",
-    tools: [
-      "Guía para la conformación de Comités de Contraloría Social en obra pública.",
-      "Mecanismos de consulta y Cabildo Abierto.",
-      "Formato de acta de supervisión ciudadana.",
-    ],
-    deliverable:
-      "Registro de Comités Comunitarios de Contraloría Social activos con actas de verificación en campo de las obras locales.",
-  },
-  {
-    number: 8,
-    id: "cap-8",
-    title: "Implementación y Seguimiento",
-    subtitle: "Monitoreo, evaluación continua y memoria de gestión",
-    icon: TrendingUp,
-    badge: "Seguimiento",
-    objective:
-      "Articular un sistema de seguimiento del avance físico-financiero de metas, evaluación del impacto de los programas y elaboración de informes ejecutivos de resultados.",
-    whyItMatters:
-      "Asegura que el diagnóstico y las metas no queden en papel, permitiendo correcciones oportunas y garantizando una entrega-recepción ordenada al final del trienio.",
-    tools: [
-      "Tablero de Control de Mando con semáforos de cumplimiento.",
-      "Fichas de evaluación trimestral de metas institucionales.",
-      "Plantilla para el Informe de Gobierno Municipal.",
-    ],
-    deliverable:
-      "Informes Ejecutivos de Avance Trimestral y Memoria de Gestión Institucional consolidada.",
-  },
-];
-
 export function ChapterOverview() {
-  const [selectedChapterNumber, setSelectedChapterNumber] = useState(1);
-  const [viewMode, setViewMode] = useState<"focused" | "grid">("focused");
+  // Estado para controlar los acordeones informativos desplegables
+  const [openSection, setOpenSection] = useState<string | null>("componentes");
 
-  const currentChapter =
-    CHAPTERS_CATALOG.find((c) => c.number === selectedChapterNumber) ||
-    CHAPTERS_CATALOG[0];
-
-  const CurrentIcon = currentChapter.icon;
+  function toggleSection(id: string) {
+    setOpenSection((prev) => (prev === id ? null : id));
+  }
 
   return (
     <main className="flex-1 bg-background px-4 py-6 md:px-6 md:py-8 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-8">
+      <div className="mx-auto max-w-6xl space-y-8">
         {/* =========================================================================
-            1. Encabezado del Documento Rector
+            1. Encabezado Oficial del Capítulo 1
            ========================================================================= */}
         <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -223,410 +47,505 @@ export function ChapterOverview() {
               </div>
 
               <h1 className="text-2xl font-black tracking-tight text-text-primary md:text-3xl lg:text-4xl">
-                Manual para el Buen Gobierno y Gobernanza Municipal
+                Capítulo 1: Fundamentos del Buen Gobierno y la Gobernanza Municipal
               </h1>
 
-              <p className="mt-3 text-sm sm:text-base leading-relaxed text-text-secondary">
-                Coedición institucional formalizada entre la <strong>Benemérita Universidad
-                Autónoma de Puebla (Facultad de Administración)</strong> y el <strong>Gobierno
-                del Estado de Puebla</strong>. Este instrumento rector articula la metodología
-                completa a través de <strong>8 capítulos temáticos</strong> para transformar
-                la gestión en los 217 municipios poblanos.
+              <p className="mt-3 text-sm leading-relaxed text-text-secondary md:text-base">
+                Este capítulo abre la guía rectora. Antes de aplicar cualquier diagnóstico o instrumento
+                operativo, el ayuntamiento debe reconocer los principios básicos que orientan el buen
+                gobierno: <strong>legalidad, transparencia, rendición de cuentas, eficiencia y participación ciudadana</strong>.
               </p>
-            </div>
 
-            {/* Ficha institucional lateral */}
-            <div className="rounded-xl border border-primary/20 bg-primary-light p-5 lg:w-72 shrink-0">
-              <p className="text-xs font-bold uppercase tracking-wider text-primary">
-                Ficha del Documento Rector
-              </p>
-              <div className="mt-3 space-y-2 text-xs text-text-primary">
-                <p>
-                  <strong>Estructura:</strong> 8 Capítulos Integrales
-                </p>
-                <p>
-                  <strong>Enfoque:</strong> 4 Fases de Aplicación
-                </p>
-                <p>
-                  <strong>Alcance:</strong> 217 Municipios de Puebla
-                </p>
-                <p>
-                  <strong>Acompañamiento:</strong> Asesoría BUAP en territorio
-                </p>
-              </div>
+              {/* Botones de acción rápida en el Hero */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <a
+                  href="/manual/capitulos/capitulo-1.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>Ver PDF Oficial del Capítulo 1</span>
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </a>
 
-              <div className="mt-4 pt-3 border-t border-primary/20 flex items-center justify-between">
+                <Link
+                  href={routes.chapter1.selfAssessment}
+                  className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/5 px-5 py-2.5 text-xs font-bold text-primary hover:bg-primary/10 transition"
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  <span>Autoevaluación (Pág. 7)</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+
                 <Link
                   href={routes.chapter1.resources}
-                  className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-soft transition"
                 >
-                  <span>Ver recursos y anexos</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <Layers className="h-4 w-4" />
+                  <span>Biblioteca y Normatividad</span>
                 </Link>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* =========================================================================
-            2. Ciclo Metodológico de 4 Fases
-           ========================================================================= */}
-        <section className="bg-white rounded-2xl border border-border p-6 shadow-sm">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4">
-            Ciclo Metodológico Rector en Cuatro Fases
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <span className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">
-                FASE 1
-              </span>
-              <h3 className="font-bold text-text-primary text-sm mt-1">Comprender</h3>
-              <p className="text-xs text-text-secondary mt-1">
-                Marco legal, responsabilidades y principios rectores (Cap. 1 y 6).
+            {/* Ficha ejecutiva lateral */}
+            <div className="rounded-xl border border-primary/20 bg-primary-light p-5 lg:w-72 shrink-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-primary">
+                Ficha Técnica del Capítulo
               </p>
-            </div>
 
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <span className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">
-                FASE 2
-              </span>
-              <h3 className="font-bold text-text-primary text-sm mt-1">Aplicar</h3>
-              <p className="text-xs text-text-secondary mt-1">
-                Diagnóstico de capacidades y planeación estratégica (Cap. 2 y 3).
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <span className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">
-                FASE 3
-              </span>
-              <h3 className="font-bold text-text-primary text-sm mt-1">Documentar</h3>
-              <p className="text-xs text-text-secondary mt-1">
-                Control interno, mapas de riesgos y gobierno abierto (Cap. 4 y 5).
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <span className="inline-block px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">
-                FASE 4
-              </span>
-              <h3 className="font-bold text-text-primary text-sm mt-1">Dar Seguimiento</h3>
-              <p className="text-xs text-text-secondary mt-1">
-                Contraloría social, tableros de control y memorias (Cap. 7 y 8).
-              </p>
+              <div className="mt-3 space-y-2.5 text-xs text-text-primary">
+                <div>
+                  <span className="block text-[11px] font-bold text-text-muted uppercase">Producto Esperado</span>
+                  <p className="font-semibold text-text-primary">Marco conceptual adoptado para servidores públicos municipales</p>
+                </div>
+                <div>
+                  <span className="block text-[11px] font-bold text-text-muted uppercase">Siguiente Conexión</span>
+                  <p className="font-semibold text-text-primary">Capítulo 2: Diagnóstico Institucional Municipal</p>
+                </div>
+                <div>
+                  <span className="block text-[11px] font-bold text-text-muted uppercase">Responsables</span>
+                  <p className="font-medium text-text-secondary">Presidente Municipal, Síndico, Cabildo</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* =========================================================================
-            3. Selector Interactivo de los 8 Capítulos
+            2. Módulos Temáticos Desplegables (Organización limpia sin ruido visual)
            ========================================================================= */}
         <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-primary">
-                Desglose Modular Didáctico
+                Contenido Metodológico Sintetizado
               </p>
               <h2 className="text-xl font-bold text-text-primary">
-                Los 8 Capítulos del Documento Rector
+                Estructura del Capítulo 1
               </h2>
-              <p className="text-xs text-text-secondary">
-                Selecciona cualquier capítulo para revisar su síntesis ejecutiva, herramientas y producto entregable.
-              </p>
             </div>
-
-            {/* Alternador de vista */}
-            <div className="inline-flex rounded-xl border border-border bg-surface p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => setViewMode("focused")}
-                className={`rounded-lg px-3 py-1.5 font-medium transition ${
-                  viewMode === "focused"
-                    ? "bg-primary text-white shadow-xs"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                Vista Detallada
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`rounded-lg px-3 py-1.5 font-medium transition ${
-                  viewMode === "grid"
-                    ? "bg-primary text-white shadow-xs"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
-              >
-                Ver Todos (8)
-              </button>
-            </div>
+            <p className="text-xs text-text-secondary">
+              Haz clic en cada sección para desplegar u ocultar los detalles
+            </p>
           </div>
 
-          {/* Barra de Pestañas de los 8 Capítulos */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {CHAPTERS_CATALOG.map((cap) => {
-              const isSelected = selectedChapterNumber === cap.number;
-              const Icon = cap.icon;
-              return (
-                <button
-                  key={cap.number}
-                  type="button"
-                  onClick={() => {
-                    setSelectedChapterNumber(cap.number);
-                    if (viewMode === "grid") setViewMode("focused");
-                  }}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold whitespace-nowrap transition border ${
-                    isSelected
-                      ? "bg-primary text-white border-primary shadow-xs"
-                      : "bg-surface text-text-secondary border-border hover:border-text-muted hover:text-text-primary"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>Capítulo {cap.number}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Modo Detallado / Enfocado */}
-          {viewMode === "focused" && (
-            <div className="rounded-2xl border border-border bg-surface p-6 md:p-8 shadow-sm animate-in fade-in-50 duration-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
-                    <CurrentIcon className="h-6 w-6" />
+          <div className="space-y-3">
+            {/* Acordeón 1: Concepto y Componentes del Buen Gobierno */}
+            <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => toggleSection("componentes")}
+                className="w-full flex items-center justify-between p-5 text-left transition hover:bg-surface-soft/60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Scale className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                        Capítulo {currentChapter.number}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                        {currentChapter.badge}
-                      </span>
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-text-primary mt-0.5">
-                      {currentChapter.title}
+                    <h3 className="text-sm font-bold text-text-primary">
+                      1.1 y 1.2 · Concepto y 5 Componentes del Buen Gobierno
                     </h3>
-                    <p className="text-xs text-text-secondary mt-0.5">
-                      {currentChapter.subtitle}
+                    <p className="text-xs text-text-secondary">
+                      Prácticas y principios axiológicos que sustentan la administración municipal
                     </p>
                   </div>
                 </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                    openSection === "componentes" ? "rotate-180 text-primary" : ""
+                  }`}
+                />
+              </button>
 
-                {currentChapter.actionRoute && (
-                  <Link
-                    href={currentChapter.actionRoute}
-                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-primary-hover transition shrink-0"
-                  >
-                    <span>{currentChapter.actionText || "Comenzar"}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                )}
-              </div>
-
-              {/* Contenido Modular del Capítulo */}
-              <div className="grid md:grid-cols-2 gap-6 pt-6">
-                {/* Objetivo */}
-                <div className="rounded-xl border border-border bg-slate-50/60 p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#174a91] mb-2 flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-primary" />
-                    <span>Objetivo Central</span>
-                  </h4>
-                  <p className="text-sm text-text-primary leading-relaxed">
-                    {currentChapter.objective}
+              {openSection === "componentes" && (
+                <div className="px-5 pb-5 pt-2 border-t border-border bg-surface-soft/40 animate-in fade-in-50 duration-150">
+                  <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+                    El buen gobierno es el conjunto de prácticas y principios que orientan la actuación
+                    institucional hacia el bienestar colectivo, estructurado en 5 componentes fundamentales:
                   </p>
-                </div>
 
-                {/* Por qué importa */}
-                <div className="rounded-xl border border-border bg-slate-50/60 p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-2 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>¿Por qué importa al Municipio?</span>
-                  </h4>
-                  <p className="text-sm text-text-primary leading-relaxed">
-                    {currentChapter.whyItMatters}
-                  </p>
-                </div>
-
-                {/* Herramientas y Anexos */}
-                <div className="rounded-xl border border-border bg-slate-50/60 p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-primary mb-2 flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-primary" />
-                    <span>Herramientas y Anexos Metodológicos</span>
-                  </h4>
-                  <ul className="space-y-2 text-xs text-text-secondary">
-                    {currentChapter.tools.map((tool, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        <span>{tool}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Producto Entregable */}
-                <div className="rounded-xl border border-border bg-slate-50/60 p-5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-2 flex items-center gap-1.5">
-                    <FileCheck className="w-4 h-4 text-amber-600" />
-                    <span>Producto Entregable</span>
-                  </h4>
-                  <p className="text-sm font-semibold text-text-primary leading-relaxed">
-                    {currentChapter.deliverable}
-                  </p>
-                  <p className="text-xs text-text-muted mt-2">
-                    Documento auditable que acredita el cumplimiento del capítulo en el expediente municipal.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Modo Cuadrícula Completa (Ver los 8 Capítulos simultáneamente) */}
-          {viewMode === "grid" && (
-            <div className="grid md:grid-cols-2 gap-6 animate-in fade-in-50 duration-200">
-              {CHAPTERS_CATALOG.map((cap) => {
-                const Icon = cap.icon;
-                return (
-                  <div
-                    key={cap.number}
-                    className="rounded-2xl border border-border bg-surface p-6 shadow-sm hover:border-primary/40 transition flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-primary">
-                          Capítulo {cap.number}
-                        </span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          {cap.badge}
-                        </span>
-                      </div>
-
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h4 className="text-base font-bold text-text-primary">
-                            {cap.title}
-                          </h4>
-                          <p className="text-xs text-text-secondary">{cap.subtitle}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 text-xs text-text-secondary border-t border-border pt-3 mt-3">
-                        <p>
-                          <strong className="text-text-primary">Objetivo:</strong>{" "}
-                          {cap.objective}
-                        </p>
-                        <p>
-                          <strong className="text-text-primary">Entregable:</strong>{" "}
-                          <span className="text-emerald-700 font-medium">{cap.deliverable}</span>
-                        </p>
-                      </div>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">1. Transparencia y rendición</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Apertura informativa, portales accesibles y responsabilidad en el uso del patrimonio público.
+                      </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedChapterNumber(cap.number);
-                          setViewMode("focused");
-                        }}
-                        className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
-                      >
-                        <span>Ver detalles completos</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">2. Atención a demandas sociales</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Orientación hacia las necesidades colectivas prioritarias y grupos vulnerables.
+                      </p>
+                    </div>
 
-                      {cap.actionRoute && (
-                        <Link
-                          href={cap.actionRoute}
-                          className="text-xs font-bold text-primary hover:text-primary-hover"
-                        >
-                          Ir al módulo &rarr;
-                        </Link>
-                      )}
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">3. Participación social</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Mecanismos permanentes de consulta, cabildo abierto y colaboración ciudadana.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">4. Instituciones eficaces</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Capacidad de gestión para obtener resultados tangibles y servicios públicos de calidad.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface sm:col-span-2 lg:col-span-2">
+                      <span className="text-xs font-bold text-primary block mb-1">5. Servidores públicos íntegros</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Personal capacitado, profesionalizado y estrictamente apegado a la ética pública y combate al conflicto de interés.
+                      </p>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Acordeón 2: Marco Jurídico Municipal */}
+            <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => toggleSection("juridico")}
+                className="w-full flex items-center justify-between p-5 text-left transition hover:bg-surface-soft/60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Landmark className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-text-primary">
+                      1.2.1 · Marco Jurídico Municipal del Buen Gobierno
+                    </h3>
+                    <p className="text-xs text-text-secondary">
+                      Fundamentación constitucional federal, estatal y leyes orgánicas
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                    openSection === "juridico" ? "rotate-180 text-primary" : ""
+                  }`}
+                />
+              </button>
+
+              {openSection === "juridico" && (
+                <div className="px-5 pb-5 pt-2 border-t border-border bg-surface-soft/40 animate-in fade-in-50 duration-150">
+                  <div className="grid md:grid-cols-3 gap-3.5 mb-3">
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">
+                        Constitución Federal (CPEUM)
+                      </span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        <strong>Art. 115:</strong> Base del municipio libre, hacienda, gobierno y servicios.<br />
+                        <strong>Art. 2, 3, 21 y 73:</strong> Pueblos indígenas, educación y seguridad pública.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">
+                        Constitución de Puebla
+                      </span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        <strong>Art. 102 a 106:</strong> Regulan personalidad jurídica, patrimonio propio,
+                        administración municipal centralizada y descentralizada.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">
+                        Ley Orgánica Municipal
+                      </span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Bases de integración del ayuntamiento, facultades de presidencia, sindicatura,
+                        regidurías, tesorería, secretaría y bandos locales.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <p className="text-[11px] text-text-muted">
+                      La colección completa de 17 leyes y lineamientos está disponible para consulta y descarga.
+                    </p>
+                    <Link
+                      href={routes.chapter1.resources}
+                      className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Ver textos legales completos</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Acordeón 3: Gobernanza y 4 Dimensiones */}
+            <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => toggleSection("dimensiones")}
+                className="w-full flex items-center justify-between p-5 text-left transition hover:bg-surface-soft/60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Compass className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-text-primary">
+                      1.3 y 1.4 · Gobernanza Municipal y sus 4 Dimensiones
+                    </h3>
+                    <p className="text-xs text-text-secondary">
+                      Proceso multidimensional de articulación entre gobierno y ciudadanía
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                    openSection === "dimensiones" ? "rotate-180 text-primary" : ""
+                  }`}
+                />
+              </button>
+
+              {openSection === "dimensiones" && (
+                <div className="px-5 pb-5 pt-2 border-t border-border bg-surface-soft/40 animate-in fade-in-50 duration-150">
+                  <p className="text-xs text-text-secondary mb-3 leading-relaxed">
+                    La gobernanza no depende únicamente de la acción gubernamental, sino de 4 dimensiones que
+                    interactúan de manera coordinada:
+                  </p>
+
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">a) Institucional</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Crea las reglas, mecanismos y políticas que permiten la participación social.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">b) Política</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Aporta voluntad política, liderazgo y capacidad de concertación con la sociedad.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">c) Financiera</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Garantiza recursos económicos suficientes y administrados con probidad.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <span className="text-xs font-bold text-primary block mb-1">d) Administrativa</span>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Ejecuta y coordina los canales formales de atención dentro del marco legal.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Acordeón 4: Responsables Institucionales */}
+            <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => toggleSection("responsables")}
+                className="w-full flex items-center justify-between p-5 text-left transition hover:bg-surface-soft/60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-text-primary">
+                      1.6 · Responsables Institucionales en el Ayuntamiento
+                    </h3>
+                    <p className="text-xs text-text-secondary">
+                      Distribución de competencias en Cabildo, Presidencia y Sindicatura
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                    openSection === "responsables" ? "rotate-180 text-primary" : ""
+                  }`}
+                />
+              </button>
+
+              {openSection === "responsables" && (
+                <div className="px-5 pb-5 pt-2 border-t border-border bg-surface-soft/40 animate-in fade-in-50 duration-150">
+                  <div className="grid md:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <h4 className="text-xs font-bold text-text-primary mb-1">Presidente Municipal</h4>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Liderazgo institucional, ejecución de acuerdos de cabildo y representación del ayuntamiento en la adopción del buen gobierno.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <h4 className="text-xs font-bold text-text-primary mb-1">Síndico Municipal</h4>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Defensa legal de los intereses municipales, vigilancia de la hacienda y observancia del marco normativo aplicable.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl border border-border bg-surface">
+                      <h4 className="text-xs font-bold text-text-primary mb-1">Cabildo</h4>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        Órgano colegiado de deliberación, expedición de reglamentos y validación de políticas públicas y programas municipales.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Acordeón 5: Caso Práctico 1 */}
+            <div className="rounded-2xl border border-border bg-surface overflow-hidden shadow-xs">
+              <button
+                type="button"
+                onClick={() => toggleSection("casopractico")}
+                className="w-full flex items-center justify-between p-5 text-left transition hover:bg-surface-soft/60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Briefcase className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-text-primary">
+                      Caso Práctico Básico 1.1 · Opacidad y Quejas Ciudadanas
+                    </h3>
+                    <p className="text-xs text-text-secondary">
+                      Ejemplo didáctico formalizado en la página 9 del Manual Rector
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={`h-4 w-4 text-text-muted transition-transform duration-200 ${
+                    openSection === "casopractico" ? "rotate-180 text-primary" : ""
+                  }`}
+                />
+              </button>
+
+              {openSection === "casopractico" && (
+                <div className="px-5 pb-5 pt-2 border-t border-border bg-surface-soft/40 animate-in fade-in-50 duration-150">
+                  <div className="space-y-3 text-xs text-text-secondary">
+                    <div className="bg-surface p-3.5 rounded-xl border border-border">
+                      <span className="font-bold text-rose-600 dark:text-rose-400 block mb-1">Situación:</span>
+                      <p>
+                        Un municipio presenta quejas constantes de la ciudadanía por falta de información sobre
+                        el uso de recursos públicos. No se publican informes y las solicitudes ciudadanas no
+                        reciben respuesta oportuna.
+                      </p>
+                    </div>
+
+                    <div className="bg-surface p-3.5 rounded-xl border border-border">
+                      <span className="font-bold text-primary block mb-1">Aplicación del Buen Gobierno:</span>
+                      <p>
+                        Publicación periódica de estados financieros conforme a la transparencia proactiva,
+                        atención inmediata al artículo 6° constitucional y habilitación de canales de participación social.
+                      </p>
+                    </div>
+
+                    <div className="bg-surface p-3.5 rounded-xl border border-border">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 block mb-1">Resultado Esperado:</span>
+                      <p>
+                        Recuperación de la confianza ciudadana, disminución de quejas y fortalecimiento del vínculo entre
+                        gobierno y sociedad como base del buen gobierno.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+                    <span className="text-[11px] text-text-muted">Documento descargable en 1 sola página:</span>
+                    <a
+                      href="/manual/casos-practicos/caso-practico-1.pdf"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      <span>Descargar PDF del Caso Práctico 1</span>
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
         {/* =========================================================================
-            4. Acciones Rápidas del Capítulo 1
+            3. Acciones Clave para Concluir el Capítulo 1
            ========================================================================= */}
-        <section>
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Pasos de Inicio
+        <section className="space-y-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">
+            Acreditación y Avance
           </p>
-
-          <h2 className="mt-1 text-xl font-bold text-text-primary">
-            Actividades del Capítulo 1
+          <h2 className="text-xl font-bold text-text-primary">
+            Pasos para completar el Capítulo 1
           </h2>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-2">
+            {/* Paso 1: Autoevaluación */}
             <Link
-              href={routes.chapter1.resources}
-              className="group rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+              href={routes.chapter1.selfAssessment}
+              className="group rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-primary/40 hover:shadow-md flex flex-col justify-between"
             >
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-                  <BookOpen className="h-5 w-5" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    Paso Obligatorio
+                  </span>
+                  <ClipboardCheck className="h-5 w-5 text-primary" />
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    Paso 1
-                  </p>
+                <h3 className="text-base font-bold text-text-primary group-hover:text-primary transition">
+                  Responder Lista de Verificación (Pág. 7)
+                </h3>
 
-                  <h3 className="mt-1 text-lg font-bold text-text-primary">
-                    Consultar recursos y manual oficial
-                  </h3>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                  Evalúa los 6 reactivos oficiales del Manual Rector. Tus respuestas se almacenarán
+                  en la base de datos institucional para generar tu historial de cumplimiento y
+                  habilitar el avance hacia el Capítulo 2.
+                </p>
+              </div>
 
-                  <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Revisa las guías normativas, decretos y marco jurídico
-                    relacionado con el Buen Gobierno y Gobernanza en Puebla.
-                  </p>
-
-                  <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-primary">
-                    Ver recursos
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </div>
-                </div>
+              <div className="mt-5 pt-3 border-t border-border flex items-center gap-2 text-xs font-bold text-primary">
+                <span>Comenzar autoevaluación oficial</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
 
+            {/* Paso 2: Recursos y Leyes */}
             <Link
-              href={routes.chapter1.selfAssessment}
-              className="group rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+              href={routes.chapter1.resources}
+              className="group rounded-2xl border border-border bg-surface p-6 shadow-sm transition hover:border-primary/40 hover:shadow-md flex flex-col justify-between"
             >
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-                  <ClipboardCheck className="h-5 w-5" />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-surface-soft text-text-secondary text-xs font-bold">
+                    Material de Apoyo
+                  </span>
+                  <BookOpen className="h-5 w-5 text-text-muted group-hover:text-primary transition" />
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    Paso 2
-                  </p>
+                <h3 className="text-base font-bold text-text-primary group-hover:text-primary transition">
+                  Consultar Leyes, Códigos y Anexos
+                </h3>
 
-                  <h3 className="mt-1 text-lg font-bold text-text-primary">
-                    Realizar autoevaluación inicial
-                  </h3>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                  Accede al catálogo de los 17 instrumentos jurídicos completos (CPEUM, Constitución de Puebla,
+                  Ley Orgánica Municipal, Ley de Transparencia, etc.) para fundamentar acuerdos de cabildo.
+                </p>
+              </div>
 
-                  <p className="mt-2 text-sm leading-6 text-text-secondary">
-                    Identifica el nivel preliminar de cumplimiento de los
-                    componentes de buen gobierno en el ayuntamiento.
-                  </p>
-
-                  <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-primary">
-                    Iniciar autoevaluación
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </div>
-                </div>
+              <div className="mt-5 pt-3 border-t border-border flex items-center gap-2 text-xs font-bold text-text-primary group-hover:text-primary transition">
+                <span>Explorar biblioteca jurídica</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </div>
             </Link>
           </div>

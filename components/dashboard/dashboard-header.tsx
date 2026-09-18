@@ -122,12 +122,10 @@ export function DashboardHeader({
 
         try {
             await authClient.signOut();
-            window.location.href = "/";
-        } catch {
-            window.location.href = "/";
+        } catch (err) {
+            console.warn("Error al cerrar sesión:", err);
         } finally {
-            setSigningOut(false);
-            setProfileOpen(false);
+            window.location.href = "/auth/login";
         }
     }
 
@@ -230,7 +228,7 @@ export function DashboardHeader({
                                     onClick={
                                         handleSignOut
                                     }
-                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-red-600 dark:text-red-400 transition hover:bg-red-50 dark:hover:bg-red-950/40 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <LogOut className="h-4 w-4" />
 

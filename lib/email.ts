@@ -23,9 +23,16 @@ export async function sendWelcomeCredentialsEmail({
   role,
   temporaryPassword,
   institution,
-  loginUrl = "https://sabg-buap-1.vercel.app/auth/login",
+  loginUrl,
 }: SendCredentialsParams) {
   const roleLabel = ROLE_LABELS[role] || role;
+
+  const baseUrl =
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
+  const targetLoginUrl = loginUrl || `${baseUrl.replace(/\/$/, "")}/auth/login`;
 
   const subject = `Bienvenido(a) a SABG–BUAP · Tus credenciales de acceso`;
 
@@ -93,7 +100,7 @@ export async function sendWelcomeCredentialsEmail({
       </div>
 
       <div class="btn-container">
-        <a href="${loginUrl}" class="btn">Ingresar al Sistema</a>
+        <a href="${targetLoginUrl}" class="btn">Ingresar al Sistema</a>
       </div>
 
       <p class="text" style="font-size: 13px; color: #64748b; text-align: center;">

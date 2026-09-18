@@ -24,7 +24,7 @@ export const metadata = {
 
 export default function ConocenosPage() {
   return (
-    <div className="min-h-screen bg-[#f5f7fa] text-[#18212b] font-sans antialiased flex flex-col justify-between">
+    <div className="auth-theme-forced min-h-screen bg-[#f5f7fa] text-[#18212b] font-sans antialiased flex flex-col justify-between">
       {/* =========================================================================
           1. Franja Institucional Superior
          ========================================================================= */}
@@ -260,7 +260,7 @@ export default function ConocenosPage() {
                       Directora de la Facultad de Administración
                     </p>
                     <p className="text-base font-bold text-[#0b2341] mt-0.5">
-                      Mtra. Guadalupe Morales Morales
+                      Dra. María Guadalupe Morales Espíndola
                     </p>
                     <p className="text-xs text-slate-500 mt-1">
                       Coordinación académica, metodológica y operativa del despliegue del
@@ -310,68 +310,6 @@ export default function ConocenosPage() {
         </div>
       </section>
 
-      {/* =========================================================================
-          6. Los 4 Pilares Metodológicos
-         ========================================================================= */}
-      <section className="py-12 sm:py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl font-black text-[#0b2341] tracking-tight">
-              Metodología en Cuatro Fases
-            </h2>
-            <p className="text-sm text-[#5f6b76] mt-2">
-              Un ciclo técnico sistemático diseñado para que cada municipio alcance resultados
-              tangibles e inmediatos.
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white p-6 rounded-xl border border-[#dce3ea] shadow-xs">
-              <span className="text-xs font-bold text-[#315aa6] uppercase tracking-wider">
-                Fase 1
-              </span>
-              <h3 className="text-lg font-bold text-[#0b2341] mt-1 mb-2">Comprender</h3>
-              <p className="text-xs text-[#5f6b76] leading-relaxed">
-                Estudio del marco normativo municipal, facultades de los servidores públicos
-                y revisión del estado general de la administración local.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-[#dce3ea] shadow-xs">
-              <span className="text-xs font-bold text-[#315aa6] uppercase tracking-wider">
-                Fase 2
-              </span>
-              <h3 className="text-lg font-bold text-[#0b2341] mt-1 mb-2">Aplicar</h3>
-              <p className="text-xs text-[#5f6b76] leading-relaxed">
-                Despliegue de listas de verificación, encuestas de diagnóstico situacional y
-                matrices de riesgos institucionales en sitio.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-[#dce3ea] shadow-xs">
-              <span className="text-xs font-bold text-[#315aa6] uppercase tracking-wider">
-                Fase 3
-              </span>
-              <h3 className="text-lg font-bold text-[#0b2341] mt-1 mb-2">Documentar</h3>
-              <p className="text-xs text-[#5f6b76] leading-relaxed">
-                Construcción de carpetas de evidencia, minutas, versiones públicas y
-                expedientes auditables para órganos de fiscalización.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl border border-[#dce3ea] shadow-xs">
-              <span className="text-xs font-bold text-[#315aa6] uppercase tracking-wider">
-                Fase 4
-              </span>
-              <h3 className="text-lg font-bold text-[#0b2341] mt-1 mb-2">Dar Seguimiento</h3>
-              <p className="text-xs text-[#5f6b76] leading-relaxed">
-                Monitoreo continuo de avances mediante tableros ejecutivos, semáforos de
-                cumplimiento y recomendaciones de mejora continua.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* =========================================================================
           7. Pie de Página Institucional
@@ -460,3 +398,4 @@ export default function ConocenosPage() {
     </div>
   );
 }
+
