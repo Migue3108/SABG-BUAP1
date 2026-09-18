@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
 
 const getBaseURL = () => {
   const envUrl = process.env.BETTER_AUTH_URL;
-  if (envUrl && !envUrl.includes("tu-proyecto")) {
+  if (envUrl && !envUrl.includes("tu-proyecto") && (!process.env.VERCEL || !envUrl.includes("localhost"))) {
     return envUrl;
   }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {

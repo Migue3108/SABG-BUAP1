@@ -27,11 +27,28 @@ export async function sendWelcomeCredentialsEmail({
 }: SendCredentialsParams) {
   const roleLabel = ROLE_LABELS[role] || role;
 
-  const baseUrl =
-    process.env.BETTER_AUTH_URL ||
-    process.env.NEXTAUTH_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const getBaseUrl = () => {
+    // 1. Si Vercel define la URL de producción
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    }
+    // 2. Si Vercel define la URL de la rama/despliegue
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+    // 3. BETTER_AUTH_URL si no es localhost ni plantilla
+    const authUrl = process.env.BETTER_AUTH_URL;
+    if (authUrl && !authUrl.includes("localhost") && !authUrl.includes("tu-proyecto")) {
+      return authUrl;
+    }
+    // 4. En producción sin variables de dominio en Vercel
+    if (process.env.NODE_ENV === "production") {
+      return "https://sabg-buap1.vercel.app";
+    }
+    return authUrl || "http://localhost:3000";
+  };
 
+  const baseUrl = getBaseUrl();
   const targetLoginUrl = loginUrl || `${baseUrl.replace(/\/$/, "")}/auth/login`;
 
   const subject = `Bienvenido(a) a SABG–BUAP · Tus credenciales de acceso`;
@@ -115,25 +132,40 @@ export async function sendWelcomeCredentialsEmail({
 </html>
   `;
 
-  // Comprobar si existen credenciales SMTP configuradas
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  // Configuración SMTP: Prioriza variables de entorno (Vercel / .env) y utiliza como respaldo las credenciales institucionales verificadas
+  const smtpUser = process.env.SMTP_USER || "adminsabgbuap@gmail.com";
+  const smtpPass = process.env.SMTP_PASS || "sspzfrmdaxmhepzb";
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = Number(process.env.SMTP_PORT || 465);
 
-  if (smtpHost && smtpUser && smtpPass) {
+  if (smtpUser && smtpPass) {
     try {
-      const port = Number(process.env.SMTP_PORT || 587);
-      const secure = port === 465;
+      const isGmail = smtpHost.includes("gmail") || smtpUser.includes("@gmail.com");
 
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port,
-        secure,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
+      const transportConfig: any = isGmail
+        ? {
+            service: "gmail",
+            auth: {
+              user: smtpUser,
+              pass: smtpPass,
+            },
+          }
+        : {
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: {
+              user: smtpUser,
+              pass: smtpPass,
+            },
+          };
+
+      // Tiempos de espera adecuados para entornos serverless (Vercel / AWS Lambda)
+      transportConfig.connectionTimeout = 15000;
+      transportConfig.greetingTimeout = 15000;
+      transportConfig.socketTimeout = 15000;
+
+      const transporter = nodemailer.createTransport(transportConfig);
 
       const from = process.env.EMAIL_FROM || `"SABG-BUAP Notificaciones" <${smtpUser}>`;
 
@@ -144,7 +176,7 @@ export async function sendWelcomeCredentialsEmail({
         html,
       });
 
-      console.log(`[EMAIL] Correo enviado exitosamente a: ${to}`);
+      console.log(`[EMAIL] Correo institucional enviado exitosamente a: ${to}`);
       return { success: true, simulated: false };
     } catch (error) {
       console.error("[EMAIL ERROR] Falló el envío de correo:", error);
@@ -152,7 +184,7 @@ export async function sendWelcomeCredentialsEmail({
     }
   }
 
-  // Modo simulación (desarrollo / sin SMTP configurado)
+  // Modo simulación de respaldo
   console.log("================================================================");
   console.log(`[EMAIL SIMULATION] Correo institucional para: ${to}`);
   console.log(`Asunto: ${subject}`);
