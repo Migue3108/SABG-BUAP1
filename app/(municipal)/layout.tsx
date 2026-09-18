@@ -19,7 +19,7 @@ export default async function MunicipalLayout({
     });
 
   if (!session) {
-    redirect("/auth/login");
+    redirect("/");
   }
 
   const user =
@@ -35,7 +35,7 @@ export default async function MunicipalLayout({
     });
 
   if (!user || !user.active) {
-    redirect("/auth/login");
+    redirect("/");
   }
 
   if (user.mustChangePassword) {

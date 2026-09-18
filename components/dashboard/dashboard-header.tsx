@@ -125,7 +125,11 @@ export function DashboardHeader({
         } catch (err) {
             console.warn("Error al cerrar sesión:", err);
         } finally {
-            window.location.href = "/auth/login";
+            try {
+                sessionStorage.clear();
+            } catch {}
+            // Redirige al home principal y reemplaza la entrada en el historial
+            window.location.replace("/");
         }
     }
 

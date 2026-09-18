@@ -16,7 +16,7 @@ export default async function AdminLayout({
     });
 
     if (!session) {
-        redirect("/auth/login");
+        redirect("/");
     }
 
     const user = await prisma.user.findUnique({

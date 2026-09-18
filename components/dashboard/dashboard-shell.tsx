@@ -89,6 +89,44 @@ export function DashboardShell({
         };
     }, [sidebarOpen]);
 
+    /*
+     * Seguridad y prevención de BFCache:
+     * Si el usuario cerró sesión y pulsa el botón "Atrás" en el navegador,
+     * la página no debe restaurarse de la memoria caché y se redirige de inmediato a home.
+     */
+    useEffect(() => {
+        function handlePageShow(event: PageTransitionEvent) {
+            if (event.persisted) {
+                window.location.replace("/");
+            }
+        }
+
+        async function verifySession() {
+            try {
+                const res = await fetch("/api/auth/get-session", {
+                    cache: "no-store",
+                });
+                if (!res.ok) {
+                    window.location.replace("/");
+                    return;
+                }
+                const data = await res.json();
+                if (!data?.session) {
+                    window.location.replace("/");
+                }
+            } catch {
+                // No interrumpir si hay error de red local
+            }
+        }
+
+        window.addEventListener("pageshow", handlePageShow);
+        verifySession();
+
+        return () => {
+            window.removeEventListener("pageshow", handlePageShow);
+        };
+    }, []);
+
     return (
         <div className="flex min-h-screen bg-background">
             {/* Desktop */}

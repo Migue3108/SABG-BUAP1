@@ -53,7 +53,7 @@ export function LoginForm() {
       ? await destinationResponse.json()
       : { redirectTo: "/dashboard" };
 
-    window.location.href = destination.redirectTo || "/dashboard";
+    window.location.replace(destination.redirectTo || "/dashboard");
   }
 
   return (
