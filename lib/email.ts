@@ -28,22 +28,22 @@ export async function sendWelcomeCredentialsEmail({
   const roleLabel = ROLE_LABELS[role] || role;
 
   const getBaseUrl = () => {
-    // 1. Si Vercel define la URL de producción
+    // 1. Si se define explícitamente una URL de aplicación
+    if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")) {
+      return process.env.NEXT_PUBLIC_APP_URL;
+    }
+    // 2. Si Vercel define la URL de producción
     if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
       return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-    }
-    // 2. Si Vercel define la URL de la rama/despliegue
-    if (process.env.VERCEL_URL) {
-      return `https://${process.env.VERCEL_URL}`;
     }
     // 3. BETTER_AUTH_URL si no es localhost ni plantilla
     const authUrl = process.env.BETTER_AUTH_URL;
     if (authUrl && !authUrl.includes("localhost") && !authUrl.includes("tu-proyecto")) {
       return authUrl;
     }
-    // 4. En producción sin variables de dominio en Vercel
-    if (process.env.NODE_ENV === "production") {
-      return "https://sabg-buap1.vercel.app";
+    // 4. En entorno de producción o Vercel, usar la URL canónica oficial verificada
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      return "https://sabg-buap-1.vercel.app";
     }
     return authUrl || "http://localhost:3000";
   };
@@ -116,9 +116,14 @@ export async function sendWelcomeCredentialsEmail({
         <strong>Aviso de seguridad obligatorio:</strong> Por políticas institucionales, esta clave es temporal. En tu primer inicio de sesión, el sistema te solicitará obligatoriamente cambiarla por una contraseña personal y confidencial antes de acceder a tus funciones.
       </div>
 
-      <div class="btn-container">
-        <a href="${targetLoginUrl}" class="btn">Ingresar al Sistema</a>
+      <div class="btn-container" style="text-align: center; margin: 28px 0 16px 0;">
+        <a href="${targetLoginUrl}" target="_blank" rel="noopener noreferrer" style="background-color: #0b2341; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; border: 1px solid #0b2341; box-shadow: 0 2px 6px rgba(11,35,65,0.25);" class="btn">Ingresar al Sistema</a>
       </div>
+
+      <p style="font-size: 12px; color: #64748b; text-align: center; margin: 8px 0 24px 0; line-height: 1.5; word-break: break-all;">
+        O ingresa directamente desde este enlace en tu navegador:<br>
+        <a href="${targetLoginUrl}" target="_blank" rel="noopener noreferrer" style="color: #315aa6; font-weight: 600; text-decoration: underline;">${targetLoginUrl}</a>
+      </p>
 
       <p class="text" style="font-size: 13px; color: #64748b; text-align: center;">
         Si tienes alguna duda o inconveniente para acceder, por favor contacta al administrador técnico institucional de SABG–BUAP.

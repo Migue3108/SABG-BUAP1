@@ -10,6 +10,9 @@ const getBaseURL = () => {
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   }
+  if (process.env.VERCEL) {
+    return "https://sabg-buap-1.vercel.app";
+  }
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
@@ -29,6 +32,7 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://*.vercel.app",
+    "https://sabg-buap-1.vercel.app",
   ],
 });
 
