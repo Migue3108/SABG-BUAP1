@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/:path(dashboard|admin|capitulo-[0-9]+|recursos|perfil|preferencias|seguimiento|ayuda)/:subpath*",
+        source: "/:path(dashboard|admin|coordinacion|capitulo-[0-9]+|recursos|perfil|preferencias|seguimiento|ayuda)/:subpath*",
         headers: [
           {
             key: "Cache-Control",
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/:path(dashboard|admin|capitulo-[0-9]+|recursos|perfil|preferencias|seguimiento|ayuda)",
+        source: "/:path(dashboard|admin|coordinacion|capitulo-[0-9]+|recursos|perfil|preferencias|seguimiento|ayuda)",
         headers: [
           {
             key: "Cache-Control",

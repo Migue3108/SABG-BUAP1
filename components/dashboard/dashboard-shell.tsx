@@ -15,6 +15,7 @@ type DashboardShellProps = {
 
     homePath?: string;
     profilePath?: string;
+    preferencesPath?: string;
     helpPath?: string;
 
     user: {
@@ -35,6 +36,7 @@ export function DashboardShell({
     navigation,
     homePath,
     profilePath,
+    preferencesPath,
     helpPath,
     user,
     organization,
@@ -185,6 +187,7 @@ export function DashboardShell({
                     userInitials={user.initials}
                     homePath={homePath}
                     profilePath={profilePath}
+                    preferencesPath={preferencesPath}
                     onMenuClick={() => setSidebarOpen(true)}
                 />
 

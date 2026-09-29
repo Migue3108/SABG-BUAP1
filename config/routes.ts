@@ -10,6 +10,18 @@ export const routes = {
         preferences: "/admin/preferencias",
     },
 
+    coordinator: {
+        home: "/coordinacion",
+        forms: "/coordinacion/diagnosticos",
+        profile: "/coordinacion/perfil",
+        preferences: "/coordinacion/preferencias",
+        help: "/coordinacion/ayuda",
+        form: (id: string) =>
+            `/coordinacion/diagnosticos/${id}`,
+        responses: (id: string) =>
+            `/coordinacion/diagnosticos/${id}/respuestas`,
+    },
+
     profile: "/perfil",
     preferences: "/preferencias",
     help: "/ayuda",
@@ -78,3 +90,16 @@ export const routes = {
             "/capitulo-8/informe-avance",
     },
 } as const;
+
+// Destino inicial de cada rol después de iniciar sesión
+export function getHomePathForRole(role: string): string {
+    if (role === "admin") {
+        return routes.admin.home;
+    }
+
+    if (role === "coordinator") {
+        return routes.coordinator.home;
+    }
+
+    return routes.dashboard;
+}

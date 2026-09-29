@@ -34,18 +34,20 @@ model User {
   accounts           Account[]
 
   // Relaciones operativas
-  assignmentsAsStudent MunicipalAssignment[]  @relation("StudentAssignment")
-  assignmentsAsTeacher MunicipalAssignment[]  @relation("TeacherAssignment")
-  createdRoutes        ImplementationRoute[]  @relation("RouteCreator")
-  appliedInstruments   DiagnosticInstrument[] @relation("InstrumentApplier")
-  uploadedEvidences    Evidence[]             @relation("EvidenceUploader")
-  assignedReviews      Evidence[]             @relation("EvidenceReviewer")
-  reviewsGiven         Review[]               @relation("ReviewAuthor")
-  studentLogbooks      StudentLogbook[]       @relation("StudentLogbookAuthor")
-  auditLogs            AuditLog[]             @relation("AuditUser")
-  generatedReports     ExecutiveReport[]      @relation("ReportAuthor")
-  chapterAssessments   ChapterAssessment[]
-  preference           UserPreference?
+  assignmentsAsStudent  MunicipalAssignment[]  @relation("StudentAssignment")
+  assignmentsAsTeacher  MunicipalAssignment[]  @relation("TeacherAssignment")
+  createdRoutes         ImplementationRoute[]  @relation("RouteCreator")
+  appliedInstruments    DiagnosticInstrument[] @relation("InstrumentApplier")
+  uploadedEvidences     Evidence[]             @relation("EvidenceUploader")
+  assignedReviews       Evidence[]             @relation("EvidenceReviewer")
+  reviewsGiven          Review[]               @relation("ReviewAuthor")
+  studentLogbooks       StudentLogbook[]       @relation("StudentLogbookAuthor")
+  auditLogs             AuditLog[]             @relation("AuditUser")
+  generatedReports      ExecutiveReport[]      @relation("ReportAuthor")
+  chapterAssessments    ChapterAssessment[]
+  preference            UserPreference?
+  diagnosticForms       DiagnosticForm[]       @relation("DiagnosticFormCreator")
+  diagnosticSubmissions DiagnosticSubmission[]
 
   @@map("user")
 }
@@ -112,15 +114,15 @@ model Microregion {
 }
 
 model Municipality {
-  id              String                 @id @default(uuid())
-  code            String?                @unique
+  id              String       @id @default(uuid())
+  code            String?      @unique
   name            String
   microregionId   String?
-  microregion     Microregion?           @relation(fields: [microregionId], references: [id], onDelete: SetNull)
-  status          String                 @default("demo") // demo, incorporado, en_revision, inactivo
-  currentProgress Float                  @default(0)
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
+  microregion     Microregion? @relation(fields: [microregionId], references: [id], onDelete: SetNull)
+  status          String       @default("demo") // demo, incorporado, en_revision, inactivo
+  currentProgress Float        @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   assignments      MunicipalAssignment[]
   routes           ImplementationRoute[]
@@ -135,17 +137,17 @@ model Municipality {
 }
 
 model MunicipalAssignment {
-  id             String        @id @default(uuid())
+  id             String           @id @default(uuid())
   municipalityId String
-  municipality   Municipality  @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  municipality   Municipality     @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
   studentId      String?
-  student        User?         @relation("StudentAssignment", fields: [studentId], references: [id], onDelete: SetNull)
+  student        User?            @relation("StudentAssignment", fields: [studentId], references: [id], onDelete: SetNull)
   teacherId      String?
-  teacher        User?         @relation("TeacherAssignment", fields: [teacherId], references: [id], onDelete: SetNull)
-  period         String        @default("2026-I")
-  active         Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  teacher        User?            @relation("TeacherAssignment", fields: [teacherId], references: [id], onDelete: SetNull)
+  period         String           @default("2026-I")
+  active         Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   logbooks       StudentLogbook[]
 
   @@index([municipalityId])
@@ -155,14 +157,14 @@ model MunicipalAssignment {
 }
 
 model Chapter {
-  id             String                @id @default(uuid())
-  number         Int                   @unique
-  title          String
-  purpose        String
-  status         String                @default("activo") // activo, borrador
-  version        Int                   @default(1)
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
+  id        String   @id @default(uuid())
+  number    Int      @unique
+  title     String
+  purpose   String
+  status    String   @default("activo") // activo, borrador
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   annexes        Annex[]
   practicalCases PracticalCase[]
@@ -225,21 +227,21 @@ model InstitutionalPrompt {
 }
 
 model ImplementationRoute {
-  id               String                 @id @default(uuid())
+  id               String       @id @default(uuid())
   municipalityId   String
-  municipality     Municipality           @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  municipality     Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
   chapterId        String
-  chapter          Chapter                @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  chapter          Chapter      @relation(fields: [chapterId], references: [id], onDelete: Restrict)
   declaredProblem  String
-  area             String                 @default("Contraloría Municipal")
-  stage            String                 @default("diagnostico_inicial") // diagnostico_inicial, planeacion, implementacion, seguimiento, evaluacion
-  status           String                 @default("activa") // activa, en_proceso, en_revision, observada, validada, concluida, archivada
+  area             String       @default("Contraloría Municipal")
+  stage            String       @default("diagnostico_inicial") // diagnostico_inicial, planeacion, implementacion, seguimiento, evaluacion
+  status           String       @default("activa") // activa, en_proceso, en_revision, observada, validada, concluida, archivada
   productExpected  String?
   indicatorMinimum String?
   createdById      String?
-  createdBy        User?                  @relation("RouteCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt        DateTime               @default(now())
-  updatedAt        DateTime               @updatedAt
+  createdBy        User?        @relation("RouteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   instruments      DiagnosticInstrument[]
   evidences        Evidence[]
@@ -272,12 +274,12 @@ model DiagnosticInstrument {
   priority              String              @default("Media") // Alta, Media, Baja
   initialRecommendation String?
   status                String              @default("borrador") // borrador, en_revision, observado, validado
-  dataJson              Json?               // Desglose de preguntas: cualitativas, numéricas y de selección
+  dataJson              Json? // Desglose de preguntas: cualitativas, numéricas y de selección
   submittedAt           DateTime?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
-  evidences             Evidence[]
+  evidences Evidence[]
 
   @@index([routeId])
   @@index([municipalityId])
@@ -307,14 +309,14 @@ model Evidence {
   status         String                @default("pendiente") // pendiente, en_proceso, en_revision, observado, validado, concluido, archivado
   currentVersion Int                   @default(1)
   fileUrl        String?
-  fileSize       Int?                  // En bytes, norma <= 1048576 (1MB)
+  fileSize       Int? // En bytes, norma <= 1048576 (1MB)
   mimeType       String?
   reviewComment  String?
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt
 
-  versions       EvidenceVersion[]
-  reviews        Review[]
+  versions EvidenceVersion[]
+  reviews  Review[]
 
   @@index([routeId])
   @@index([municipalityId])
@@ -341,17 +343,17 @@ model EvidenceVersion {
 }
 
 model Review {
-  id             String        @id @default(uuid())
+  id             String   @id @default(uuid())
   evidenceId     String
-  evidence       Evidence      @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
+  evidence       Evidence @relation(fields: [evidenceId], references: [id], onDelete: Cascade)
   reviewerId     String?
-  reviewer       User?         @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reviewer       User?    @relation("ReviewAuthor", fields: [reviewerId], references: [id], onDelete: SetNull)
   previousStatus String
-  newStatus      String        // observado, validado
+  newStatus      String // observado, validado
   comments       String
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime @default(now())
 
-  observations   Observation[]
+  observations Observation[]
 
   @@index([evidenceId])
   @@index([reviewerId])
@@ -381,7 +383,7 @@ model StudentLogbook {
   municipalityId String
   municipality   Municipality         @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
   date           DateTime             @default(now())
-  activityType   String               // visita_campo, reunion_enlace, revision_documental, capacitacion, gabinete
+  activityType   String // visita_campo, reunion_enlace, revision_documental, capacitacion, gabinete
   description    String
   hoursSpent     Float?
   commitments    String?
@@ -397,20 +399,20 @@ model StudentLogbook {
 }
 
 model Indicator {
-  id          String            @id @default(uuid())
+  id          String   @id @default(uuid())
   chapterId   String
-  chapter     Chapter           @relation(fields: [chapterId], references: [id], onDelete: Restrict)
-  code        String            @unique
+  chapter     Chapter  @relation(fields: [chapterId], references: [id], onDelete: Restrict)
+  code        String   @unique
   name        String
   description String?
-  type        String            @default("numerico") // numerico, cualitativo, eleccion
+  type        String   @default("numerico") // numerico, cualitativo, eleccion
   formula     String?
   unit        String?
-  status      String            @default("activo")
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  status      String   @default("activo")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  records     IndicatorRecord[]
+  records IndicatorRecord[]
 
   @@index([chapterId])
   @@map("indicators")
@@ -427,7 +429,7 @@ model IndicatorRecord {
   valueNumeric     Float?
   valueQualitative String?
   valueChoice      String?
-  period           String               // ej. 2026-Q1
+  period           String // ej. 2026-Q1
   recordedAt       DateTime             @default(now())
 
   @@index([indicatorId])
@@ -461,8 +463,8 @@ model AuditLog {
   id          String   @id @default(uuid())
   userId      String?
   user        User?    @relation("AuditUser", fields: [userId], references: [id], onDelete: SetNull)
-  action      String   // CREAR_USUARIO, CAMBIO_PASSWORD, VALIDAR_EVIDENCIA, etc.
-  module      String   // AUTH, ADMIN, DIAGNOSTICO, EVIDENCIAS, etc.
+  action      String // CREAR_USUARIO, CAMBIO_PASSWORD, VALIDAR_EVIDENCIA, etc.
+  module      String // AUTH, ADMIN, DIAGNOSTICO, EVIDENCIAS, etc.
   entityType  String?
   entityId    String?
   detailsJson Json?
@@ -481,8 +483,8 @@ model ChapterAssessment {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   chapterNumber   Int      @default(1)
-  responses       Json     // Lista de verificación: { itemId: "applies" | "partial" | "not-applies" }
-  score           Float    // Porcentaje de cumplimiento (0 a 100)
+  responses       Json // Lista de verificación: { itemId: "applies" | "partial" | "not-applies" }
+  score           Float // Porcentaje de cumplimiento (0 a 100)
   hasWarning      Boolean  @default(false)
   warningNotes    String?
   reflectionNotes String?
@@ -499,7 +501,7 @@ model UserPreference {
   userId        String   @unique
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   theme         String   @default("light") // light, dark
-  shortcuts     Json?    // Array de hasta 3 atajos personalizados: [{ id, label, path, icon }]
+  shortcuts     Json? // Array de hasta 3 atajos personalizados: [{ id, label, path, icon }]
   currentStep   String   @default("not-started") // not-started, diagnosis, route, instrument, evidence, tracking
   activeChapter Int      @default(1) // 1 a 8
   createdAt     DateTime @default(now())
@@ -508,3 +510,83 @@ model UserPreference {
   @@map("user_preferences")
 }
 
+// Formularios de diagnóstico creados por Coordinación (Capítulo 2)
+model DiagnosticForm {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?
+  chapterNumber Int       @default(2)
+  status        String    @default("borrador") // borrador, publicado, archivado
+  createdById   String?
+  createdBy     User?     @relation("DiagnosticFormCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sections    DiagnosticFormSection[]
+  submissions DiagnosticSubmission[]
+
+  @@index([chapterNumber, status])
+  @@index([createdById])
+  @@map("diagnostic_forms")
+}
+
+model DiagnosticFormSection {
+  id          String         @id @default(uuid())
+  formId      String
+  form        DiagnosticForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  order       Int
+
+  questions DiagnosticFormQuestion[]
+
+  @@index([formId])
+  @@map("diagnostic_form_sections")
+}
+
+model DiagnosticFormQuestion {
+  id        String                @id @default(uuid())
+  sectionId String
+  section   DiagnosticFormSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  text      String
+  helpText  String?
+  type      String                @default("likert") // likert
+  order     Int
+
+  answers DiagnosticAnswer[]
+
+  @@index([sectionId])
+  @@map("diagnostic_form_questions")
+}
+
+model DiagnosticSubmission {
+  id           String         @id @default(uuid())
+  formId       String
+  form         DiagnosticForm @relation(fields: [formId], references: [id], onDelete: Restrict)
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution  String?
+  averageScore Float
+  submittedAt  DateTime       @default(now())
+
+  answers DiagnosticAnswer[]
+
+  @@unique([formId, userId])
+  @@index([userId])
+  @@map("diagnostic_submissions")
+}
+
+model DiagnosticAnswer {
+  id           String                 @id @default(uuid())
+  submissionId String
+  submission   DiagnosticSubmission   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId   String
+  question     DiagnosticFormQuestion @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  value        Int // 1 a 5 (escala Likert)
+  comment      String?
+
+  @@unique([submissionId, questionId])
+  @@index([questionId])
+  @@map("diagnostic_answers")
+}

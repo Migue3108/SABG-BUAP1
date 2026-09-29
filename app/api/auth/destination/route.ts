@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { routes } from "@/config/routes";
+import { getHomePathForRole } from "@/config/routes";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -38,10 +38,7 @@ export async function GET() {
     return NextResponse.json({ redirectTo: "/auth/first-login" });
   }
 
-  const redirectTo =
-    user.role === "admin"
-      ? routes.admin.home
-      : routes.dashboard;
+  const redirectTo = getHomePathForRole(user.role);
 
   return NextResponse.json({ redirectTo });
 }

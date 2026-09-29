@@ -4,7 +4,7 @@ import { hashPassword, verifyPassword } from "better-auth/crypto";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { routes } from "@/config/routes";
+import { getHomePathForRole } from "@/config/routes";
 
 export async function POST(request: Request) {
   try {
@@ -140,10 +140,7 @@ export async function POST(request: Request) {
       console.warn("[API_FIRST_LOGIN] Advertencia al registrar bitácora:", auditErr);
     }
 
-    const redirectTo =
-      updatedUser.role === "admin"
-        ? routes.admin.home
-        : routes.dashboard;
+    const redirectTo = getHomePathForRole(updatedUser.role);
 
     return NextResponse.json({
       success: true,

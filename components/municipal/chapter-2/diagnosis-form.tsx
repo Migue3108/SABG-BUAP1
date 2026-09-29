@@ -1,11 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, FileText } from "lucide-react";
+import { CheckCircle2, ClipboardX, FileText, Loader2 } from "lucide-react";
 
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
 import { MunicipalWorkflowProgress } from "@/components/dashboard/progress/municipal-workflow-progress";
+import { DiagnosticFormRenderer } from "@/components/diagnostic/diagnostic-form-renderer";
+import { routes } from "@/config/routes";
+import type {
+    DiagnosticAnswerInput,
+    DiagnosticFormTree,
+    DiagnosticSubmissionView,
+} from "@/types/diagnostic-form";
+
+type DiagnosticState =
+    | { status: "loading" }
+    | { status: "error"; message: string }
+    | {
+        status: "ready";
+        form: DiagnosticFormTree | null;
+        submission: DiagnosticSubmissionView | null;
+    };
 
 export function DiagnosisForm() {
     const router = useRouter();
@@ -15,56 +31,112 @@ export function DiagnosisForm() {
         completeStep,
     } = useMunicipalProgress();
 
-    const diagnosisCompleted =
-        isCompleted("diagnosis");
+    const [state, setState] = useState<DiagnosticState>({ status: "loading" });
 
-    const [formData, setFormData] = useState({
-        area: "",
-        currentSituation: "",
-        compliance: "",
-        riskLevel: "",
-        problem: "",
-        observations: "",
-    });
+    useEffect(() => {
+        let cancelled = false;
 
-    const isFormValid =
-        formData.area !== "" &&
-        formData.currentSituation.trim() !== "" &&
-        formData.compliance !== "" &&
-        formData.riskLevel !== "" &&
-        formData.problem.trim() !== "" &&
-        formData.observations.trim() !== "";
+        async function loadDiagnostic() {
+            try {
+                const response = await fetch("/api/municipal/chapter-2/diagnostic", {
+                    cache: "no-store",
+                });
+                const data = await response.json().catch(() => ({}));
 
-    function handleChange(
-        event: React.ChangeEvent<
-            HTMLInputElement |
-            HTMLTextAreaElement |
-            HTMLSelectElement
-        >
-    ) {
-        const { name, value } = event.target;
+                if (cancelled) return;
 
-        setFormData((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
-    }
+                if (!response.ok) {
+                    setState({
+                        status: "error",
+                        message: data.error || "No se pudo cargar el diagnóstico",
+                    });
+                    return;
+                }
 
-    function handleSubmit(
-        event: React.FormEvent<HTMLFormElement>
-    ) {
-        event.preventDefault();
+                setState({
+                    status: "ready",
+                    form: data.form,
+                    submission: data.submission,
+                });
+            } catch {
+                if (!cancelled) {
+                    setState({
+                        status: "error",
+                        message: "Error de conexión. Recarga la página para intentar de nuevo.",
+                    });
+                }
+            }
+        }
 
-        if (!isFormValid) {
-            return;
+        loadDiagnostic();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // Si ya existe una respuesta en DB, sincroniza el progreso local
+    const alreadySubmitted =
+        state.status === "ready" && state.submission !== null;
+
+    useEffect(() => {
+        if (alreadySubmitted && !isCompleted("diagnosis")) {
+            completeStep("diagnosis");
+        }
+    }, [alreadySubmitted, isCompleted, completeStep]);
+
+    async function handleSubmit(
+        answers: DiagnosticAnswerInput[]
+    ): Promise<string | null> {
+        if (state.status !== "ready" || !state.form) {
+            return "El diagnóstico no está disponible";
+        }
+
+        try {
+            const response = await fetch("/api/municipal/chapter-2/diagnostic", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ formId: state.form.id, answers }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                return data.error || "No se pudo enviar el diagnóstico";
+            }
+        } catch {
+            return "Error de conexión. Intenta de nuevo.";
         }
 
         completeStep("diagnosis");
-
-        router.push("/capitulo-2/ruta");
+        router.push(routes.chapter2.route);
+        return null;
     }
 
-    if (diagnosisCompleted) {
+    if (state.status === "loading") {
+        return (
+            <>
+                <MunicipalWorkflowProgress />
+                <section className="flex items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-10 text-sm text-text-secondary shadow-sm">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    Cargando diagnóstico...
+                </section>
+            </>
+        );
+    }
+
+    if (state.status === "error") {
+        return (
+            <>
+                <MunicipalWorkflowProgress />
+                <DiagnosisNotice
+                    title="No se pudo cargar el diagnóstico"
+                    message={state.message}
+                />
+            </>
+        );
+    }
+
+    if (state.submission || isCompleted("diagnosis")) {
         return (
             <>
                 <MunicipalWorkflowProgress />
@@ -73,200 +145,31 @@ export function DiagnosisForm() {
         );
     }
 
+    if (!state.form) {
+        return (
+            <>
+                <MunicipalWorkflowProgress />
+                <DiagnosisNotice
+                    title="El diagnóstico aún no está disponible"
+                    message="Coordinación SABG–BUAP publicará el diagnóstico municipal en breve. Vuelve a consultar esta sección más tarde."
+                />
+            </>
+        );
+    }
+
     return (
         <>
             <MunicipalWorkflowProgress />
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <section className="rounded-2xl border border-border bg-surface shadow-sm">
-                    <header className="border-b border-border px-6 py-6">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                            Diagnóstico institucional
-                        </p>
-
-                        <h1 className="mt-1 text-2xl font-bold text-text-primary">
-                            Diagnóstico inicial del municipio
-                        </h1>
-
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                            Completa la información solicitada para identificar la situación
-                            actual, el nivel de cumplimiento y los principales riesgos del
-                            municipio. Esta información permitirá establecer una línea base y
-                            generar una ruta recomendada.
-                        </p>
-                    </header>
-
-                    <form
+                <div className="min-w-0">
+                    <DiagnosticFormRenderer
+                        form={state.form}
+                        mode="respond"
                         onSubmit={handleSubmit}
-                        className="space-y-6 p-6"
-                    >
-                        {/* Área */}
-                        <FormField label="Área o proceso evaluado">
-                            <select
-                                required
-                                name="area"
-                                value={formData.area}
-                                onChange={handleChange}
-                                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                            >
-                                <option value="">
-                                    Selecciona un área
-                                </option>
+                    />
+                </div>
 
-                                <option value="contraloria">
-                                    Contraloría Municipal
-                                </option>
-
-                                <option value="tesoreria">
-                                    Tesorería
-                                </option>
-
-                                <option value="administracion">
-                                    Administración
-                                </option>
-
-                                <option value="transparencia">
-                                    Unidad de Transparencia
-                                </option>
-
-                                <option value="secretaria">
-                                    Secretaría del Ayuntamiento
-                                </option>
-
-                                <option value="otra">
-                                    Otra
-                                </option>
-                            </select>
-                        </FormField>
-
-                        {/* Situación actual */}
-                        <FormField label="Situación actual">
-                            <textarea
-                                required
-                                name="currentSituation"
-                                value={formData.currentSituation}
-                                onChange={handleChange}
-                                rows={4}
-                                placeholder="Describe brevemente cómo funciona actualmente el área o proceso..."
-                                className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                            />
-                        </FormField>
-
-                        {/* Cumplimiento */}
-                        <FormField label="Cumplimiento institucional">
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                {[
-                                    "Cumple",
-                                    "Cumple parcialmente",
-                                    "No cumple",
-                                ].map((option) => (
-                                    <label
-                                        key={option}
-                                        className={[
-                                            "cursor-pointer rounded-xl border p-4 text-center text-sm font-semibold transition",
-                                            formData.compliance === option
-                                                ? "border-primary bg-primary-light text-primary"
-                                                : "border-border bg-background text-text-secondary hover:border-primary/40",
-                                        ].join(" ")}
-                                    >
-                                        <input
-                                            required
-                                            type="radio"
-                                            name="compliance"
-                                            value={option}
-                                            checked={
-                                                formData.compliance === option
-                                            }
-                                            onChange={handleChange}
-                                            className="sr-only"
-                                        />
-
-                                        {option}
-                                    </label>
-                                ))}
-                            </div>
-                        </FormField>
-
-                        {/* Riesgo */}
-                        <FormField label="Nivel de riesgo identificado">
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                {[
-                                    "Bajo",
-                                    "Medio",
-                                    "Alto",
-                                ].map((risk) => (
-                                    <label
-                                        key={risk}
-                                        className={[
-                                            "cursor-pointer rounded-xl border p-4 text-center text-sm font-semibold transition",
-                                            formData.riskLevel === risk
-                                                ? "border-primary bg-primary-light text-primary"
-                                                : "border-border bg-background text-text-secondary hover:border-primary/40",
-                                        ].join(" ")}
-                                    >
-                                        <input
-                                            required
-                                            type="radio"
-                                            name="riskLevel"
-                                            value={risk}
-                                            checked={
-                                                formData.riskLevel === risk
-                                            }
-                                            onChange={handleChange}
-                                            className="sr-only"
-                                        />
-
-                                        {risk}
-                                    </label>
-                                ))}
-                            </div>
-                        </FormField>
-
-                        {/* Problema */}
-                        {/* <FormField label="Principal problemática detectada">
-                        <textarea
-                            required
-                            name="problem"
-                            value={formData.problem}
-                            onChange={handleChange}
-                            rows={4}
-                            placeholder="Describe el principal problema, incumplimiento o área de oportunidad detectada..."
-                            className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                        />
-                    </FormField> */}
-
-                        {/* Observaciones */}
-                        <FormField label="Observaciones adicionales">
-                            <textarea
-                                required
-                                name="observations"
-                                value={formData.observations}
-                                onChange={handleChange}
-                                rows={4}
-                                placeholder="Agrega cualquier información adicional relevante para el diagnóstico..."
-                                className="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-                            />
-                        </FormField>
-
-                        <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
-                            <button
-                                type="button"
-                                className="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-background"
-                            >
-                                Guardar borrador
-                            </button>
-
-                            <button
-                                type="submit"
-                                disabled={!isFormValid}
-                                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                                Finalizar diagnóstico
-                            </button>
-                        </div>
-                    </form>
-                </section>
-
-                <aside className="space-y-5">
+                <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
                     <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-light text-primary">
@@ -296,12 +199,13 @@ export function DiagnosisForm() {
 
                             <div>
                                 <p className="text-sm font-semibold text-text-primary">
-                                    Completa todos los campos
+                                    Responde todas las preguntas
                                 </p>
 
                                 <p className="mt-1 text-sm leading-6 text-text-secondary">
-                                    La ruta recomendada se habilitará cuando el diagnóstico
-                                    haya sido completado correctamente.
+                                    Cada pregunta usa una escala del 1 al 5. Puedes agregar un
+                                    comentario opcional. La ruta recomendada se habilitará al
+                                    enviar el diagnóstico.
                                 </p>
                             </div>
                         </div>
@@ -309,6 +213,32 @@ export function DiagnosisForm() {
                 </aside>
             </div>
         </>
+    );
+}
+
+function DiagnosisNotice({
+    title,
+    message,
+}: {
+    title: string;
+    message: string;
+}) {
+    return (
+        <section className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
+            <div className="mx-auto max-w-2xl text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary-light text-primary">
+                    <ClipboardX className="h-7 w-7" />
+                </div>
+
+                <h1 className="mt-5 text-2xl font-bold text-text-primary">
+                    {title}
+                </h1>
+
+                <p className="mt-3 text-sm leading-6 text-text-secondary">
+                    {message}
+                </p>
+            </div>
+        </section>
     );
 }
 
@@ -334,7 +264,7 @@ function DiagnosisCompleted() {
                 <button
                     type="button"
                     onClick={() =>
-                        router.push("/capitulo-2/ruta")
+                        router.push(routes.chapter2.route)
                     }
                     className="mt-6 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
                 >
@@ -342,23 +272,5 @@ function DiagnosisCompleted() {
                 </button>
             </div>
         </section>
-    );
-}
-
-function FormField({
-    label,
-    children,
-}: {
-    label: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div>
-            <label className="mb-2 block text-sm font-semibold text-text-primary">
-                {label}
-            </label>
-
-            {children}
-        </div>
     );
 }

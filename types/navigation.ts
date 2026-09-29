@@ -7,7 +7,8 @@ export type NavigationIcon =
     | "help"
     | "users"
     | "building"
-    | "audit";
+    | "audit"
+    | "form";
 
 export type ChapterNavigationStatus =
     | "completed"

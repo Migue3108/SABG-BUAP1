@@ -16,6 +16,7 @@ import {
     LockKeyhole,
     X,
     ClipboardList,
+    ClipboardCheck,
     Users,
 } from "lucide-react";
 
@@ -49,6 +50,7 @@ const navigationIcons = {
     users: Users,
     building: Building2,
     audit: ClipboardList,
+    form: ClipboardCheck,
 } satisfies Record<
     NavigationIcon,
     React.ElementType

@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { routes } from "@/config/routes";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -44,6 +45,10 @@ export default async function MunicipalLayout({
 
   if (user.role === "admin") {
     redirect("/admin");
+  }
+
+  if (user.role === "coordinator") {
+    redirect(routes.coordinator.home);
   }
 
   const ROLE_LABELS: Record<string, string> = {

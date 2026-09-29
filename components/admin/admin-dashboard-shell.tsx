@@ -24,6 +24,7 @@ export function AdminDashboardShell({
             navigation={adminNavigation}
             homePath={routes.admin.home}
             profilePath={routes.admin.profile}
+            preferencesPath={routes.admin.preferences}
             helpPath="/admin/ayuda"
             user={user}
             organization={{

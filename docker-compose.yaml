@@ -3,11 +3,11 @@ version: "3"
 services:
   sabg-buap:
     image: postgres:15.3 # Version de la base de datos
-    container_name: sabg-buap # nombre del contenedor, dns hacia la base de datos
+    container_name: sabg-buap1 # nombre del contenedor, dns hacia la base de datos
     restart: unless-stopped # Reinicio para levantar la base de datos
     ports:
       #
-      - 5432:5432 # Burbuja totalmente aislada. 
+      - 5433:5432 # Burbuja totalmente aislada. 
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=admin
