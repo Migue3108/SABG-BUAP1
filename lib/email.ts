@@ -41,8 +41,8 @@ export async function sendWelcomeCredentialsEmail({
     if (authUrl && !authUrl.includes("localhost") && !authUrl.includes("tu-proyecto")) {
       return authUrl;
     }
-    // 4. En entorno de producción o Vercel, usar la URL canónica oficial verificada
-    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    // 4. En Vercel, usar la URL canónica oficial
+    if (process.env.VERCEL) {
       return "https://sabg-buap-1.vercel.app";
     }
     return authUrl || "http://localhost:3000";
@@ -137,9 +137,9 @@ export async function sendWelcomeCredentialsEmail({
 </html>
   `;
 
-  // Configuración SMTP: Prioriza variables de entorno (Vercel / .env) y utiliza como respaldo las credenciales institucionales verificadas
-  const smtpUser = process.env.SMTP_USER || "adminsabgbuap@gmail.com";
-  const smtpPass = process.env.SMTP_PASS || "sspzfrmdaxmhepzb";
+  // Configuración SMTP desde variables de entorno; sin ellas se simula el envío en consola
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
   const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
   const smtpPort = Number(process.env.SMTP_PORT || 465);
 

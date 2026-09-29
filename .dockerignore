@@ -1,0 +1,12 @@
+node_modules
+.next
+postgres
+.git
+.env*
+!.env.template
+.vercel
+.claude
+.DS_Store
+npm-debug.log*
+Dockerfile
+.dockerignore

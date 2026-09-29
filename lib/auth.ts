@@ -19,8 +19,27 @@ const getBaseURL = () => {
   return "http://localhost:3000";
 };
 
+// Orígenes permitidos: los de desarrollo, la URL pública (BETTER_AUTH_URL) y
+// cualquier extra en BETTER_AUTH_TRUSTED_ORIGINS (separados por comas)
+const getTrustedOrigins = () => {
+  const origins = new Set([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app",
+    "https://sabg-buap-1.vercel.app",
+    getBaseURL(),
+  ]);
+
+  for (const origin of (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "").split(",")) {
+    if (origin.trim()) origins.add(origin.trim().replace(/\/$/, ""));
+  }
+
+  return [...origins];
+};
+
 export const auth = betterAuth({
-  secret: process.env.BETTER_AUTH_SECRET || "Koo4UqzbaYV9+PB4HebaXD/eiw6fFdSFGMLysstFPsM=",
+  // Obligatorio en producción: Better Auth falla si no está definido
+  secret: process.env.BETTER_AUTH_SECRET,
   baseURL: getBaseURL(),
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -28,12 +47,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://*.vercel.app",
-    "https://sabg-buap-1.vercel.app",
-  ],
+  trustedOrigins: getTrustedOrigins(),
 });
 
 export default auth;
