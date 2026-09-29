@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { requireApiUser } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -46,42 +47,57 @@ export async function GET() {
   }
 }
 
+// POST: solo avanza el paso y el capítulo, nunca retrocede. Así el reenvío tardío
+// de cambios hechos sin conexión (o desde otro dispositivo) no borra avance.
 export async function POST(request: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
+    const { user, response } = await requireApiUser();
+    if (response) return response;
+
+    const body = (await request.json().catch(() => null)) as {
+      currentStep?: unknown;
+      activeChapter?: unknown;
+    } | null;
+
+    const requestedStep =
+      typeof body?.currentStep === "string" && VALID_STEPS.includes(body.currentStep)
+        ? body.currentStep
+        : null;
+
+    const requestedChapter =
+      typeof body?.activeChapter === "number" &&
+      Number.isInteger(body.activeChapter) &&
+      body.activeChapter >= 1 &&
+      body.activeChapter <= 8
+        ? body.activeChapter
+        : null;
+
+    const current = await prisma.userPreference.findUnique({
+      where: { userId: user.id },
+      select: { currentStep: true, activeChapter: true },
     });
 
-    if (!session) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-    }
+    const currentStep = current?.currentStep ?? "not-started";
+    const currentChapter = current?.activeChapter ?? 1;
 
-    const body = await request.json();
-    const { currentStep, activeChapter } = body;
+    const nextStep =
+      requestedStep && VALID_STEPS.indexOf(requestedStep) > VALID_STEPS.indexOf(currentStep)
+        ? requestedStep
+        : currentStep;
 
-    const dataToUpdate: Record<string, any> = {};
-
-    if (currentStep && VALID_STEPS.includes(currentStep)) {
-      dataToUpdate.currentStep = currentStep;
-    }
-
-    if (
-      typeof activeChapter === "number" &&
-      Number.isInteger(activeChapter) &&
-      activeChapter >= 1 &&
-      activeChapter <= 8
-    ) {
-      dataToUpdate.activeChapter = activeChapter;
-    }
+    const nextChapter = Math.max(requestedChapter ?? currentChapter, currentChapter);
 
     const preference = await prisma.userPreference.upsert({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       create: {
-        userId: session.user.id,
-        currentStep: dataToUpdate.currentStep || "not-started",
-        activeChapter: dataToUpdate.activeChapter || 1,
+        userId: user.id,
+        currentStep: nextStep,
+        activeChapter: nextChapter,
       },
-      update: dataToUpdate,
+      update: {
+        currentStep: nextStep,
+        activeChapter: nextChapter,
+      },
     });
 
     return NextResponse.json({
@@ -97,4 +113,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

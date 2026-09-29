@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, MessageSquarePlus, MessageSquareX } from "lucide-react";
 
 import { likertScale } from "@/config/likert";
@@ -15,9 +15,18 @@ type DiagnosticFormRendererProps = {
     form: Pick<DiagnosticFormTree, "title" | "description" | "sections">;
     // respond: se envía; preview: interactivo sin guardar; readonly: muestra respuestas enviadas
     mode: "respond" | "preview" | "readonly";
-    initialAnswers?: { questionId: string; value: number; comment: string | null }[];
+    initialAnswers?: DiagnosticAnswerDraft[];
     submitLabel?: string;
     onSubmit?: (answers: DiagnosticAnswerInput[]) => Promise<string | null>;
+    // Se llama cada vez que cambian las respuestas (para guardar el borrador)
+    onAnswersChange?: (answers: DiagnosticAnswerDraft[]) => void;
+};
+
+// Respuesta posiblemente incompleta (borrador guardado en el dispositivo)
+export type DiagnosticAnswerDraft = {
+    questionId: string;
+    value?: number;
+    comment: string | null;
 };
 
 const COMMENT_MAX = 1000;
@@ -44,6 +53,7 @@ export function DiagnosticFormRenderer({
     initialAnswers,
     submitLabel = "Finalizar diagnóstico",
     onSubmit,
+    onAnswersChange,
 }: DiagnosticFormRendererProps) {
     const readOnly = mode === "readonly";
 
@@ -54,6 +64,24 @@ export function DiagnosticFormRenderer({
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [previewNotice, setPreviewNotice] = useState(false);
+
+    const onAnswersChangeRef = useRef(onAnswersChange);
+
+    useEffect(() => {
+        onAnswersChangeRef.current = onAnswersChange;
+    }, [onAnswersChange]);
+
+    useEffect(() => {
+        if (readOnly) return;
+
+        onAnswersChangeRef.current?.(
+            Object.entries(answers).map(([questionId, answer]) => ({
+                questionId,
+                value: answer?.value,
+                comment: answer?.comment ? answer.comment : null,
+            }))
+        );
+    }, [answers, readOnly]);
 
     const questions = useMemo(
         () => form.sections.flatMap((section) => section.questions),

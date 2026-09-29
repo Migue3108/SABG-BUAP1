@@ -21,9 +21,15 @@ import {
 import { municipalInstrumentMock } from "@/config/instrument";
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
 import { MunicipalWorkflowProgress } from "@/components/dashboard/progress/municipal-workflow-progress";
+import { clearDraft, loadDraft, useAutosaveDraft } from "@/lib/offline/drafts";
+import { useOfflineSync } from "@/lib/offline/sync-provider";
 
-const STORAGE_KEY =
+// Clave anterior (global, sin usuario); se migra una vez al borrador por usuario
+const LEGACY_STORAGE_KEY =
     "sabg-instrument-draft";
+
+const DRAFT_KEY =
+    "chapter-2-instrument";
 
 type FormValues = Record<string, string>;
 
@@ -60,38 +66,68 @@ export function InstrumentForm() {
         initialValues
     );
 
+    const { userId } = useOfflineSync();
+
     const [
-        saved,
-        setSaved,
+        draftLoaded,
+        setDraftLoaded,
     ] = useState(false);
 
+    const draftSavedAt = useAutosaveDraft(
+        userId,
+        DRAFT_KEY,
+        formData,
+        draftLoaded && !instrumentCompleted
+    );
+
     /*
-     * Recuperar borrador temporal.
+     * Recuperar borrador guardado en el dispositivo.
      */
     useEffect(() => {
-        const stored =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
+        let cancelled = false;
 
-        if (!stored) {
-            return;
+        async function restoreDraft() {
+            let stored =
+                await loadDraft<FormValues>(
+                    userId,
+                    DRAFT_KEY
+                );
+
+            try {
+                const legacy =
+                    localStorage.getItem(
+                        LEGACY_STORAGE_KEY
+                    );
+
+                if (!stored && legacy) {
+                    stored = JSON.parse(legacy) as FormValues;
+                }
+
+                localStorage.removeItem(
+                    LEGACY_STORAGE_KEY
+                );
+            } catch {}
+
+            if (cancelled) {
+                return;
+            }
+
+            if (stored) {
+                setFormData((previous) => ({
+                    ...previous,
+                    ...stored,
+                }));
+            }
+
+            setDraftLoaded(true);
         }
 
-        try {
-            const parsed =
-                JSON.parse(stored);
+        restoreDraft();
 
-            setFormData((previous) => ({
-                ...previous,
-                ...parsed,
-            }));
-        } catch {
-            localStorage.removeItem(
-                STORAGE_KEY
-            );
-        }
-    }, []);
+        return () => {
+            cancelled = true;
+        };
+    }, [userId]);
 
     const isFormValid =
         municipalInstrumentMock.fields
@@ -117,17 +153,6 @@ export function InstrumentForm() {
                 [fieldId]: value,
             })
         );
-
-        setSaved(false);
-    }
-
-    function handleSaveDraft() {
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(formData)
-        );
-
-        setSaved(true);
     }
 
     function handleSubmit(
@@ -141,8 +166,9 @@ export function InstrumentForm() {
 
         completeStep("instrument");
 
-        localStorage.removeItem(
-            STORAGE_KEY
+        clearDraft(
+            userId,
+            DRAFT_KEY
         );
 
         router.push(
@@ -221,19 +247,16 @@ export function InstrumentForm() {
                                     )}
 
                                     <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={
-                                                handleSaveDraft
-                                            }
-                                            className="flex items-center justify-center gap-2 rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-background"
+                                        <p
+                                            aria-live="polite"
+                                            className="flex items-center justify-center gap-2 px-2 py-2.5 text-sm font-semibold text-text-secondary"
                                         >
                                             <Save className="h-4 w-4" />
 
-                                            {saved
-                                                ? "Borrador guardado"
-                                                : "Guardar borrador"}
-                                        </button>
+                                            {draftSavedAt
+                                                ? `Guardado automáticamente a las ${draftSavedAt.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}`
+                                                : "Tu avance se guarda automáticamente"}
+                                        </p>
 
                                         <button
                                             type="submit"

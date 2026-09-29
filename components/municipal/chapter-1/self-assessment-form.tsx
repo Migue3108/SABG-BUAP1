@@ -7,6 +7,7 @@ import {
   ArrowRight,
   CheckCircle2,
   ClipboardCheck,
+  CloudOff,
   FileText,
   History,
   Info,
@@ -18,8 +19,39 @@ import {
 
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
 import { routes } from "@/config/routes";
+import { clearDraft, loadDraft, useAutosaveDraft } from "@/lib/offline/drafts";
+import { enqueue, isNetworkError, requestSync } from "@/lib/offline/outbox";
+import { useOfflineSync } from "@/lib/offline/sync-provider";
 
-const STORAGE_KEY = "sabg-chapter-1-self-assessment-v2";
+// Clave anterior (global, sin usuario); se migra una vez al borrador por usuario
+const LEGACY_STORAGE_KEY = "sabg-chapter-1-self-assessment-v2";
+const DRAFT_KEY = "chapter-1-self-assessment";
+const ASSESSMENT_URL = "/api/municipal/chapter-1/assessment";
+
+type AssessmentDraft = {
+  answers: Record<string, string>;
+  reflectionNotes: string;
+};
+
+// Mismo cálculo que el servidor, para mostrar el resultado cuando se envía sin conexión
+function scoreAnswers(values: string[]) {
+  let totalPoints = 0;
+  let hasWarning = false;
+
+  for (const value of values) {
+    if (value === "applies") {
+      totalPoints += 1;
+    } else {
+      if (value === "partial") totalPoints += 0.5;
+      hasWarning = true;
+    }
+  }
+
+  return {
+    score: Math.round((totalPoints / Math.max(values.length, 1)) * 100),
+    hasWarning,
+  };
+}
 
 type AssessmentValue = "applies" | "partial" | "not-applies" | "";
 type AssessmentAnswers = Record<string, AssessmentValue>;
@@ -114,30 +146,63 @@ type PastAssessment = {
 
 export function SelfAssessmentForm() {
   const { completeChapter } = useMunicipalProgress();
+  const { userId } = useOfflineSync();
 
   const [answers, setAnswers] = useState<AssessmentAnswers>(initialAnswers);
   const [reflectionNotes, setReflectionNotes] = useState("");
-  const [savedLocally, setSavedLocally] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState<{
     score: number;
     hasWarning: boolean;
+    pendingSync: boolean;
   } | null>(null);
   const [pastAssessments, setPastAssessments] = useState<PastAssessment[]>([]);
 
-  // Cargar borrador de localStorage
+  const draft = useMemo<AssessmentDraft>(
+    () => ({ answers, reflectionNotes }),
+    [answers, reflectionNotes]
+  );
+
+  const draftSavedAt = useAutosaveDraft(
+    userId,
+    DRAFT_KEY,
+    draft,
+    draftLoaded && !submittedData
+  );
+
+  // Restaurar el borrador guardado en el dispositivo
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    let cancelled = false;
+
+    async function restoreDraft() {
+      let stored = await loadDraft<AssessmentDraft>(userId, DRAFT_KEY);
+
       try {
-        const parsed = JSON.parse(stored);
-        if (parsed.answers) setAnswers(parsed.answers);
-        if (parsed.reflectionNotes) setReflectionNotes(parsed.reflectionNotes);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (!stored && legacy) {
+          stored = JSON.parse(legacy) as AssessmentDraft;
+        }
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+      } catch {}
+
+      if (cancelled) return;
+
+      if (stored?.answers) {
+        setAnswers({ ...initialAnswers, ...(stored.answers as AssessmentAnswers) });
       }
+      if (stored?.reflectionNotes) {
+        setReflectionNotes(stored.reflectionNotes);
+      }
+      setDraftLoaded(true);
     }
-  }, []);
+
+    restoreDraft();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   // Consultar historial de la base de datos
   useEffect(() => {
@@ -179,25 +244,12 @@ export function SelfAssessmentForm() {
       ...prev,
       [id]: value,
     }));
-    setSavedLocally(false);
-  }
-
-  function handleSaveDraft() {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        answers,
-        reflectionNotes,
-      })
-    );
-    setSavedLocally(true);
   }
 
   function handleReset() {
     setAnswers(initialAnswers);
     setReflectionNotes("");
-    localStorage.removeItem(STORAGE_KEY);
-    setSavedLocally(false);
+    clearDraft(userId, DRAFT_KEY);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -205,30 +257,54 @@ export function SelfAssessmentForm() {
     if (!isFormComplete) return;
 
     setIsSubmitting(true);
-    try {
-      const res = await fetch("/api/municipal/chapter-1/assessment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          responses: answers,
-          reflectionNotes,
-        }),
-      });
 
-      if (!res.ok) {
-        throw new Error("Error al guardar en el servidor");
+    const body = {
+      responses: answers,
+      reflectionNotes,
+      clientRequestId: crypto.randomUUID(),
+    };
+
+    try {
+      let result: { score: number; hasWarning: boolean; pendingSync: boolean };
+
+      try {
+        const res = await fetch(ASSESSMENT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          throw new Error("Error al guardar en el servidor");
+        }
+
+        const data = await res.json();
+        result = {
+          score: data.assessment.score,
+          hasWarning: data.assessment.hasWarning,
+          pendingSync: false,
+        };
+      } catch (err) {
+        if (!isNetworkError(err)) throw err;
+
+        // Sin conexión: se guarda en el dispositivo y se envía al reconectar
+        await enqueue({
+          userId,
+          kind: "chapter-1-assessment",
+          url: ASSESSMENT_URL,
+          body,
+        });
+        requestSync();
+
+        result = { ...scoreAnswers(Object.values(answers)), pendingSync: true };
       }
 
-      const result = await res.json();
-      localStorage.removeItem(STORAGE_KEY);
+      await clearDraft(userId, DRAFT_KEY);
 
       // Desbloquear avance al siguiente capítulo en el contexto del usuario
       completeChapter(1);
 
-      setSubmittedData({
-        score: result.assessment.score,
-        hasWarning: result.assessment.hasWarning,
-      });
+      setSubmittedData(result);
     } catch (err) {
       console.error(err);
       alert("Hubo un problema al guardar la autoevaluación. Inténtalo de nuevo.");
@@ -255,10 +331,19 @@ export function SelfAssessmentForm() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-text-secondary">
-              Tu autoevaluación oficial ha sido registrada exitosamente en la base de datos.
+              {submittedData.pendingSync
+                ? "Tu autoevaluación quedó guardada en este dispositivo y se enviará automáticamente al reconectar."
+                : "Tu autoevaluación oficial ha sido registrada exitosamente en la base de datos."}{" "}
               El nivel de cumplimiento calculado para este capítulo es del{" "}
               <strong className="text-primary font-bold">{submittedData.score}%</strong>.
             </p>
+
+            {submittedData.pendingSync && (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                <CloudOff className="h-3.5 w-3.5" />
+                Pendiente de sincronizar
+              </p>
+            )}
 
             {submittedData.hasWarning && (
               <div className="mt-6 rounded-xl border border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-left">
@@ -456,10 +541,7 @@ export function SelfAssessmentForm() {
             <textarea
               rows={3}
               value={reflectionNotes}
-              onChange={(e) => {
-                setReflectionNotes(e.target.value);
-                setSavedLocally(false);
-              }}
+              onChange={(e) => setReflectionNotes(e.target.value)}
               placeholder="Ejemplo: Se cuenta con acuerdo de cabildo de fecha 15 de enero; pendiente publicación en bando oficial..."
               className="w-full resize-none rounded-xl border border-border bg-background p-3 text-xs text-text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
@@ -477,14 +559,17 @@ export function SelfAssessmentForm() {
             </button>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-soft transition"
+              <p
+                aria-live="polite"
+                className="inline-flex items-center justify-center gap-2 px-2 py-2.5 text-xs font-semibold text-text-secondary"
               >
                 <Save className="h-3.5 w-3.5" />
-                <span>{savedLocally ? "Borrador guardado en equipo" : "Guardar borrador"}</span>
-              </button>
+                <span>
+                  {draftSavedAt
+                    ? `Guardado automáticamente a las ${draftSavedAt.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}`
+                    : "Tu avance se guarda automáticamente"}
+                </span>
+              </p>
 
               <button
                 type="submit"
@@ -492,7 +577,7 @@ export function SelfAssessmentForm() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isSubmitting ? (
-                  <span>Guardando en base de datos...</span>
+                  <span>Guardando...</span>
                 ) : (
                   <>
                     <span>Guardar y Finalizar Autoevaluación</span>

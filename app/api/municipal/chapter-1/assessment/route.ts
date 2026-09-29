@@ -50,6 +50,29 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { responses, reflectionNotes } = body;
 
+    // Identificador generado en el cliente: si un envío hecho sin conexión se
+    // reintenta, se devuelve el registro ya creado en lugar de duplicarlo
+    const clientRequestId =
+      typeof body.clientRequestId === "string" &&
+      body.clientRequestId.length > 0 &&
+      body.clientRequestId.length <= 64
+        ? body.clientRequestId
+        : null;
+
+    if (clientRequestId) {
+      const existing = await prisma.chapterAssessment.findUnique({
+        where: { clientRequestId },
+      });
+
+      if (existing) {
+        if (existing.userId !== session.user.id) {
+          return NextResponse.json({ error: "Solicitud inválida" }, { status: 400 });
+        }
+
+        return NextResponse.json({ success: true, assessment: existing });
+      }
+    }
+
     if (!responses || typeof responses !== "object") {
       return NextResponse.json(
         { error: "Se requiere el objeto con las respuestas de verificación" },
@@ -95,6 +118,7 @@ export async function POST(request: Request) {
         hasWarning,
         warningNotes,
         reflectionNotes: reflectionNotes || null,
+        clientRequestId,
       },
     });
 

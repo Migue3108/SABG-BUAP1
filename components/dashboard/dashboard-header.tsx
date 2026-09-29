@@ -18,6 +18,9 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import { useOptionalOfflineSync } from "@/lib/offline/sync-provider";
+import { ConnectionStatus } from "@/components/offline/connection-status";
+import { clearOfflineCache } from "@/components/offline/service-worker-registrar";
 
 type DashboardHeaderProps = {
     userName: string;
@@ -51,6 +54,8 @@ export function DashboardHeader({
 
     const [signingOut, setSigningOut] =
         useState(false);
+
+    const offlineSync = useOptionalOfflineSync();
 
     const menuRef =
         useRef<HTMLDivElement>(null);
@@ -118,9 +123,23 @@ export function DashboardHeader({
             return;
         }
 
+        const pendingChanges = offlineSync
+            ? offlineSync.pendingCount + offlineSync.failedEntries.length
+            : 0;
+
+        if (
+            pendingChanges > 0 &&
+            !window.confirm(
+                `Tienes ${pendingChanges} cambio(s) sin sincronizar. Se enviarán cuando vuelvas a iniciar sesión en este equipo con conexión. ¿Cerrar sesión?`
+            )
+        ) {
+            return;
+        }
+
         setSigningOut(true);
 
         try {
+            await clearOfflineCache().catch(() => {});
             await authClient.signOut();
         } catch (err) {
             console.warn("Error al cerrar sesión:", err);
@@ -152,6 +171,8 @@ export function DashboardHeader({
             </Link>
 
             <div className="ml-auto flex items-center gap-2 md:gap-4">
+                <ConnectionStatus />
+
                 <button
                     type="button"
                     aria-label="Notificaciones"

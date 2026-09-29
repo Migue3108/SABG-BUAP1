@@ -1,6 +1,7 @@
 "use client";
 
 import {
+    useEffect,
     useRef,
     useState,
 } from "react";
@@ -18,7 +19,14 @@ import {
 import { useMunicipalProgress } from "@/contexts/municipal-progress-context";
 import { MunicipalWorkflowProgress } from "@/components/dashboard/progress/municipal-workflow-progress";
 
+import { clearDraft, loadDraft, useAutosaveDraft } from "@/lib/offline/drafts";
+import { useOfflineSync } from "@/lib/offline/sync-provider";
+
 import type { EvidenceFile } from "@/types/evidence";
+
+// Los archivos seleccionados se guardan en el dispositivo (IndexedDB) para no perderlos al recargar
+const DRAFT_KEY =
+    "chapter-2-evidence";
 
 const MAX_FILE_SIZE =
     5 * 1024 * 1024;
@@ -54,6 +62,43 @@ export function EvidenceUpload() {
 
     const evidenceCompleted =
         isCompleted("evidence");
+
+    const { userId } = useOfflineSync();
+
+    const [
+        draftLoaded,
+        setDraftLoaded,
+    ] = useState(false);
+
+    useAutosaveDraft(
+        userId,
+        DRAFT_KEY,
+        evidences,
+        draftLoaded && !evidenceCompleted
+    );
+
+    useEffect(() => {
+        let cancelled = false;
+
+        loadDraft<EvidenceFile[]>(
+            userId,
+            DRAFT_KEY
+        ).then((stored) => {
+            if (cancelled) {
+                return;
+            }
+
+            if (stored?.length) {
+                setEvidences(stored);
+            }
+
+            setDraftLoaded(true);
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [userId]);
 
     function validateFile(
         file: File
@@ -172,6 +217,11 @@ export function EvidenceUpload() {
         }
 
         completeStep("evidence");
+
+        clearDraft(
+            userId,
+            DRAFT_KEY
+        );
 
         router.push(
             "/seguimiento"

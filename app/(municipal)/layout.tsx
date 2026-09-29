@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { MunicipalDashboardShell } from "@/components/municipal/municipal-dashboard-shell";
 
 import { MunicipalProgressProvider } from "@/contexts/municipal-progress-context";
+import { OfflineSyncProvider } from "@/lib/offline/sync-provider";
+import { ServiceWorkerRegistrar } from "@/components/offline/service-worker-registrar";
 
 export default async function MunicipalLayout({
   children,
@@ -87,26 +89,29 @@ export default async function MunicipalLayout({
   const initialChapter = preference?.activeChapter || 1;
 
   return (
-    <MunicipalProgressProvider
-      userId={session.user.id}
-      initialStep={initialStep}
-      initialChapter={initialChapter}
-    >
-      <MunicipalDashboardShell
-        user={{
-          name,
-          role: displayRole,
-          rawRole: user.role,
-          initials,
-          email: session.user.email,
-        }}
-        organization={{
-          name: user.institution || "SABG–BUAP",
-          area: user.title || "Gestión Municipal",
-        }}
+    <OfflineSyncProvider userId={session.user.id}>
+      <ServiceWorkerRegistrar userId={session.user.id} />
+      <MunicipalProgressProvider
+        userId={session.user.id}
+        initialStep={initialStep}
+        initialChapter={initialChapter}
       >
-        {children}
-      </MunicipalDashboardShell>
-    </MunicipalProgressProvider>
+        <MunicipalDashboardShell
+          user={{
+            name,
+            role: displayRole,
+            rawRole: user.role,
+            initials,
+            email: session.user.email,
+          }}
+          organization={{
+            name: user.institution || "SABG–BUAP",
+            area: user.title || "Gestión Municipal",
+          }}
+        >
+          {children}
+        </MunicipalDashboardShell>
+      </MunicipalProgressProvider>
+    </OfflineSyncProvider>
   );
 }

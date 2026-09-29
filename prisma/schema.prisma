@@ -488,6 +488,7 @@ model ChapterAssessment {
   hasWarning      Boolean  @default(false)
   warningNotes    String?
   reflectionNotes String?
+  clientRequestId String?  @unique // Evita duplicados al reenviar envíos hechos sin conexión
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

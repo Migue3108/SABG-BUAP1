@@ -11,6 +11,7 @@ import {
 
 import type { ReactNode } from "react";
 import type { MunicipalStep } from "@/types/workflow";
+import { enqueue, requestSync } from "@/lib/offline/outbox";
 
 const stepOrder: MunicipalStep[] = [
     "not-started",
@@ -56,6 +57,40 @@ function isMunicipalStep(value: string): value is MunicipalStep {
     return stepOrder.includes(value as MunicipalStep);
 }
 
+function furthestStep(a: MunicipalStep, b: MunicipalStep): MunicipalStep {
+    return stepOrder.indexOf(a) >= stepOrder.indexOf(b) ? a : b;
+}
+
+type ProgressUpdate = {
+    currentStep?: MunicipalStep;
+    activeChapter?: number;
+};
+
+// Encola el avance para enviarlo al servidor; si no hay conexión se queda
+// guardado en el dispositivo y se envía al reconectar.
+function saveProgressRemotely(userId: string | undefined, update: ProgressUpdate) {
+    if (!userId) {
+        fetch("/api/user/progress", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(update),
+        }).catch(() => {});
+        return;
+    }
+
+    enqueue({
+        userId,
+        kind: "progress",
+        url: "/api/user/progress",
+        body: update,
+        dedupeKey: "progress",
+    })
+        .then(requestSync)
+        .catch((err) => {
+            console.warn("No se pudo guardar el avance en el dispositivo:", err);
+        });
+}
+
 export function MunicipalProgressProvider({
     children,
     userId,
@@ -79,60 +114,80 @@ export function MunicipalProgressProvider({
         const stepKey = getStepKey(userId);
         const chapterKey = getChapterKey(userId);
 
-        // 2. Cargar clave exclusiva del usuario actual si existe en este dispositivo
+        // 2. Tomar el avance más lejano entre este dispositivo y lo que envió el servidor
         const saved =
             typeof window !== "undefined"
                 ? localStorage.getItem(stepKey)
                 : null;
 
+        let localStep: MunicipalStep = initialStep;
+
         if (saved && isMunicipalStep(saved)) {
-            setCurrentStep(saved);
-        } else if (initialStep) {
-            setCurrentStep(initialStep);
+            localStep = furthestStep(saved, initialStep);
         }
 
-        const savedChapterStr =
+        const savedChapter = Number(
             typeof window !== "undefined"
                 ? localStorage.getItem(chapterKey)
-                : null;
+                : null
+        );
 
-        const savedChapter = Number(savedChapterStr);
+        const localChapter =
+            Number.isInteger(savedChapter) && savedChapter >= 1
+                ? Math.max(savedChapter, initialChapter)
+                : initialChapter;
 
-        if (Number.isInteger(savedChapter) && savedChapter >= 1) {
-            setUnlockedChapter(savedChapter);
-        } else if (initialChapter) {
-            setUnlockedChapter(initialChapter);
+        setCurrentStep(localStep);
+        setUnlockedChapter(localChapter);
+
+        if (typeof window !== "undefined") {
+            localStorage.setItem(stepKey, localStep);
+            localStorage.setItem(chapterKey, String(localChapter));
         }
 
         setHydrated(true);
 
-        // 3. Sincronizar desde la base de datos para el usuario activo
+        // 3. Fusionar con la base de datos: nunca se retrocede, y si el dispositivo
+        // va adelante (avance hecho sin conexión) se sube al servidor
         async function syncDbProgress() {
             try {
-                const res = await fetch("/api/user/progress");
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.currentStep && isMunicipalStep(data.currentStep)) {
-                        setCurrentStep(data.currentStep);
-                        if (typeof window !== "undefined") {
-                            localStorage.setItem(stepKey, data.currentStep);
-                        }
-                    }
-                    if (
-                        typeof data.activeChapter === "number" &&
-                        data.activeChapter >= 1
-                    ) {
-                        setUnlockedChapter(data.activeChapter);
-                        if (typeof window !== "undefined") {
-                            localStorage.setItem(
-                                chapterKey,
-                                String(data.activeChapter)
-                            );
-                        }
-                    }
+                const res = await fetch("/api/user/progress", {
+                    cache: "no-store",
+                });
+
+                if (!res.ok) return;
+
+                const data = await res.json();
+
+                const dbStep: MunicipalStep =
+                    typeof data.currentStep === "string" && isMunicipalStep(data.currentStep)
+                        ? data.currentStep
+                        : "not-started";
+
+                const dbChapter =
+                    typeof data.activeChapter === "number" && data.activeChapter >= 1
+                        ? data.activeChapter
+                        : 1;
+
+                const mergedStep = furthestStep(localStep, dbStep);
+                const mergedChapter = Math.max(localChapter, dbChapter);
+
+                setCurrentStep((previous) => furthestStep(previous, mergedStep));
+                setUnlockedChapter((previous) => Math.max(previous, mergedChapter));
+
+                if (typeof window !== "undefined") {
+                    localStorage.setItem(stepKey, mergedStep);
+                    localStorage.setItem(chapterKey, String(mergedChapter));
+                }
+
+                if (mergedStep !== dbStep || mergedChapter !== dbChapter) {
+                    saveProgressRemotely(userId, {
+                        currentStep: mergedStep,
+                        activeChapter: mergedChapter,
+                    });
                 }
             } catch {
-                // Silencioso si falla fetch en modo offline
+                // Sin conexión: se conserva el avance local
             }
         }
 
@@ -153,14 +208,7 @@ export function MunicipalProgressProvider({
                     localStorage.setItem(getStepKey(userId), step);
                 }
 
-                // Guardar en la base de datos exclusivamente para este usuario
-                fetch("/api/user/progress", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ currentStep: step }),
-                }).catch((err) => {
-                    console.warn("No se pudo guardar el paso en base de datos:", err);
-                });
+                saveProgressRemotely(userId, { currentStep: step });
 
                 return step;
             });
@@ -244,14 +292,7 @@ export function MunicipalProgressProvider({
                     );
                 }
 
-                // Persistir en base de datos para el usuario activo
-                fetch("/api/user/progress", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ activeChapter: nextChapter }),
-                }).catch((err) => {
-                    console.warn("No se pudo guardar el avance en base de datos:", err);
-                });
+                saveProgressRemotely(userId, { activeChapter: nextChapter });
 
                 return nextChapter;
             });
@@ -273,14 +314,7 @@ export function MunicipalProgressProvider({
                     );
                 }
 
-                // Persistir en base de datos para el usuario activo
-                fetch("/api/user/progress", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ activeChapter: chapter }),
-                }).catch((err) => {
-                    console.warn("No se pudo guardar el desbloqueo en base de datos:", err);
-                });
+                saveProgressRemotely(userId, { activeChapter: chapter });
 
                 return chapter;
             });
